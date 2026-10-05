@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Workspace &amp; Analytics | Mobility Wallet</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="alternate icon" type="image/png" th:href="@{/favicon.png}">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .split-forms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a th:href="@{/admin/dashboard}" class="brand-logo">
+                <img th:src="@{/images/logo-dark.svg}" alt="Mobility Wallet" height="32" width="32" class="brand-logo-img">
+                <div class="brand-logo-text">Mobility Wallet <span class="brand-logo-tag">Admin Portal</span></div>
+            </a>
+            <div class="nav-actions">
+                <div class="user-badge">
+                    <div class="user-avatar" th:text="${#strings.substring(user.name, 0, 1)}">A</div>
+                    <div class="user-details">
+                        <div class="user-name" th:text="${user.name}">System Administrator</div>
+                        <div class="user-email" th:text="${user.email}">admin@mobility.com</div>
+                    </div>
+                    <span class="badge badge-role-admin" style="margin-left: 0.5rem;" th:text="${role}">ROLE_ADMIN</span>
+                </div>
+                <form th:action="@{/logout}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="btn btn-secondary btn-sm">Sign Out</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Flash Alerts -->
+        <div th:if="${successMessage}" class="alert alert-success">
+            <span th:text="${successMessage}">Action completed successfully!</span>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger">
+            <span th:text="${errorMessage}">An error occurred!</span>
+        </div>
+
+        <!-- KPI Metric Cards Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Total Voucher Value Issued</span>
+                </div>
+                <div class="stat-value">₹<span th:text="${#numbers.formatDecimal(analytics.totalIssuedAmount, 1, 2)}">0.00</span></div>
+                <div class="stat-desc">
+                    <span th:text="${analytics.totalVouchersCount}">0</span> total vouchers issued
+                </div>
+            </div>
+
+            <div class="stat-card accent-green">
+                <div class="stat-header">
+                    <span class="stat-label">Total Funds Redeemed</span>
+                </div>
+                <div class="stat-value">₹<span th:text="${#numbers.formatDecimal(analytics.totalRedeemedAmount, 1, 2)}">0.00</span></div>
+                <div class="stat-desc">
+                    <span th:text="${analytics.redeemedVouchersCount}">0</span> vouchers redeemed for travel
+                </div>
+            </div>
+
+            <div class="stat-card accent-cyan">
+                <div class="stat-header">
+                    <span class="stat-label" title="Includes: Active digital wallet balances and trip cancellation refunds across all commuters. Excludes: Unredeemed, assigned, or expired travel vouchers.">
+                        Total Wallet Liability <span style="cursor: help; opacity: 0.6; font-size: 0.8rem;">[?]</span>
+                    </span>
+                </div>
+                <div class="stat-value">₹<span th:text="${#numbers.formatDecimal(analytics.totalWalletBalance, 1, 2)}">0.00</span></div>
+                <div class="stat-desc" title="Includes active commuter balances and refunds; excludes unredeemed vouchers">
+                    Includes active balances &amp; refunds; excludes unredeemed vouchers
+                </div>
+            </div>
+
+            <div class="stat-card accent-amber">
+                <div class="stat-header">
+                    <span class="stat-label">Activity Volume</span>
+                </div>
+                <div class="stat-value">
+                    <span th:text="${analytics.totalBookingsCount + analytics.totalRidesCount}">0</span>
+                </div>
+                <div class="stat-desc">
+                    <span th:text="${analytics.totalBookingsCount}">0</span> bookings &bull; <span th:text="${analytics.totalRidesCount}">0</span> taxi rides
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation Bar -->
+        <div class="tab-nav">
+            <button class="tab-btn" data-tab="analytics" th:classappend="${activeTab == 'analytics' ? 'active' : ''}" onclick="switchTab('analytics')">
+                Visual Analytics
+            </button>
+            <button class="tab-btn" data-tab="vouchers" th:classappend="${activeTab == 'vouchers' ? 'active' : ''}" onclick="switchTab('vouchers')">
+                Voucher Operations (<span th:text="${vouchers.size()}">0</span>)
+            </button>
+            <button class="tab-btn" data-tab="transit" th:classappend="${activeTab == 'transit' ? 'active' : ''}" onclick="switchTab('transit')">
+                Transit Scheduling (<span th:text="${trips.size()}">0</span>)
+            </button>
+            <button class="tab-btn" data-tab="rides" th:classappend="${activeTab == 'rides' ? 'active' : ''}" onclick="switchTab('rides')">
+                Taxi Ride Audits (<span th:text="${rides.size()}">0</span>)
+            </button>
+        </div>
+
+        <!-- ==========================================
+             TAB 1: VISUAL ANALYTICS (CHART.JS)
+             ========================================== -->
+        <div id="tab-analytics" class="tab-content" th:classappend="${activeTab == 'analytics' ? 'active' : ''}">
+            <div class="charts-grid">
+                <!-- Chart 1: Daily Spend Velocity -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Daily Expenditure Velocity (Past 7 Days)</div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Debit Ledger Movements (₹)</span>
+                    </div>
+                    <canvas id="dailySpendChart" height="220"></canvas>
+                    <div id="dailySpendEmpty" class="chart-empty-state" style="display: none; height: 220px; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 500;">
+                        <span>No data yet</span>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Voucher Status Funnel -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Voucher Distribution &amp; Conversion</div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Current Status Breakdown</span>
+                    </div>
+                    <canvas id="voucherStatusChart" height="220"></canvas>
+                    <div id="voucherStatusEmpty" class="chart-empty-state" style="display: none; height: 220px; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 500;">
+                        <span>No data yet</span>
+                    </div>
+                </div>
+
+                <!-- Chart 3: Route Revenue Breakdown -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Route Gross Revenues (₹)</div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Confirmed Booking Income</span>
+                    </div>
+                    <canvas id="routeRevenueChart" height="220"></canvas>
+                    <div id="routeRevenueEmpty" class="chart-empty-state" style="display: none; height: 220px; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 500;">
+                        <span>No data yet</span>
+                    </div>
+                </div>
+
+                <!-- Chart 4: Seat Load Factor Occupancy -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Route Seat Load Factor (%)</div>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Occupancy: (Booked / Total) * 100</span>
+                    </div>
+                    <canvas id="seatLoadFactorChart" height="220"></canvas>
+                    <div id="seatLoadFactorEmpty" class="chart-empty-state" style="display: none; height: 220px; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 500;">
+                        <span>No data yet</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity: Last 5 Transactions -->
+            <div class="card" style="margin-top: 1.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Recent Activity</h3>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Last 5 ledger transactions recorded across all platform wallets</div>
+                    </div>
+                    <span class="badge" th:text="${recentTransactions != null ? recentTransactions.size() : 0} + ' transactions'">5 transactions</span>
+                </div>
+
+                <div class="table-responsive" th:if="${recentTransactions != null and !recentTransactions.isEmpty()}">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Ref #</th>
+                                <th>Timestamp</th>
+                                <th>Commuter</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="tx : ${recentTransactions}">
+                                <td><code>#TX-<span th:text="${tx.id}">1</span></code></td>
+                                <td th:text="${#temporals.format(tx.createdAt, 'MMM dd, yyyy HH:mm')}">Oct 04, 2026 10:30</td>
+                                <td>
+                                    <strong th:text="${tx.wallet?.user?.name ?: 'Commuter'}">John Doe</strong>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);" th:text="${tx.wallet?.user?.email}">user@mobility.com</div>
+                                </td>
+                                <td>
+                                    <span class="badge" th:classappend="${tx.type.name() == 'CREDIT' ? 'badge-success' : 'badge-danger'}" th:text="${tx.type}">CREDIT</span>
+                                </td>
+                                <td>
+                                    <strong th:style="${tx.type.name() == 'CREDIT' ? 'color: var(--success);' : 'color: var(--danger);'}">
+                                        <span th:text="${tx.type.name() == 'CREDIT' ? '+' : '-'}"></span>₹<span th:text="${#numbers.formatDecimal(tx.amount, 1, 2)}">50.00</span>
+                                    </strong>
+                                </td>
+                                <td>
+                                    <span th:text="${tx.description}">Transaction description</span>
+                                    <div th:if="${tx.voucher != null}" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                                        Voucher: <code th:text="${tx.voucher.code}">VCH-123</code>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="chart-empty-state" th:if="${recentTransactions == null or recentTransactions.isEmpty()}" style="display: flex; height: 120px; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.95rem;">
+                    <span>No data yet</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 2: VOUCHER OPERATIONS
+             ========================================== -->
+        <div id="tab-vouchers" class="tab-content" th:classappend="${activeTab == 'vouchers' ? 'active' : ''}">
+            <div class="split-forms-grid">
+                <!-- Single Voucher Creation Form -->
+                <div class="card-form">
+                    <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;">Issue Single Voucher</h3>
+                    <form th:action="@{/admin/vouchers/create}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                        <div class="form-group">
+                            <label class="form-label" for="vCode">Voucher Code</label>
+                            <input type="text" id="vCode" name="code" class="form-control" placeholder="e.g. VCH-CAMPUS-150" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="vVal">Initial Value (₹)</label>
+                            <input type="number" id="vVal" name="initialValue" step="0.50" min="1" max="10000" class="form-control" placeholder="150.00" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="vExp">Expiry Date</label>
+                            <input type="date" id="vExp" name="expiryDate" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="assignUser">Assign to Commuter (Optional)</label>
+                            <select id="assignUser" name="assignToUserId" class="form-select">
+                                <option value="" selected>-- Keep Unassigned in Pool --</option>
+                                <option th:each="c : ${commuters}" th:value="${c.id}" th:text="${c.name + ' (' + c.email + ')'}">
+                                    John Doe (user@mobility.com)
+                                </option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Create Voucher</button>
+                    </form>
+                </div>
+
+                <!-- Bulk Voucher Generation Form -->
+                <div class="card-form">
+                    <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;">Bulk Batch Voucher Generator</h3>
+                    <form th:action="@{/admin/vouchers/bulk}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                        <div class="form-group">
+                            <label class="form-label" for="bulkCount">Quantity to Generate (1 - 50)</label>
+                            <input type="number" id="bulkCount" name="count" min="1" max="50" class="form-control" value="5" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="bulkVal">Face Value per Voucher (₹)</label>
+                            <input type="number" id="bulkVal" name="initialValue" step="1.00" min="5" max="5000" class="form-control" value="100.00" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="bulkExp">Batch Expiry Date</label>
+                            <input type="date" id="bulkExp" name="expiryDate" class="form-control" required>
+                        </div>
+
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+                            Generates cryptographic, unique <code>VCH-YYYY-XXXXXX</code> voucher codes in the <code>CREATED</code> state, ready for commuter assignment.
+                        </p>
+
+                        <button type="submit" class="btn btn-secondary" style="width: 100%;">Generate Batch</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- All Vouchers Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">All Issued Vouchers</div>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);" th:text="${vouchers.size() + ' total record(s)'}">0 records</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Initial Amount</th>
+                                <th>Status</th>
+                                <th>Expiry Date</th>
+                                <th>Assigned To</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="v : ${vouchers}">
+                                <td><code style="font-weight: 700; color: var(--primary);" th:text="${v.code}">VCH-123</code></td>
+                                <td style="font-weight: 700;">₹<span th:text="${#numbers.formatDecimal(v.initialValue, 1, 2)}">100.00</span></td>
+                                <td>
+                                    <span class="badge" th:classappend="${'badge-' + #strings.toLowerCase(v.status.name())}" th:text="${v.status}">CREATED</span>
+                                </td>
+                                <td th:text="${v.expiryDate}">2026-11-01</td>
+                                <td>
+                                    <span th:if="${v.assignedTo != null}" th:text="${v.assignedTo.name + ' (' + v.assignedTo.email + ')'}">John Doe</span>
+                                    <span th:if="${v.assignedTo == null}" style="color: var(--text-muted); font-style: italic;">Unassigned (Pool)</span>
+                                </td>
+                                <td>
+                                    <!-- Quick assign inline form for unassigned vouchers -->
+                                    <form th:if="${v.status.name() == 'CREATED'}" th:action="@{/admin/vouchers/assign}" method="post" style="display: flex; gap: 0.35rem; align-items: center;">
+                                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <input type="hidden" name="voucherId" th:value="${v.id}">
+                                        <select name="userId" class="form-select" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; width: auto;" required>
+                                            <option value="" disabled selected>Assign Commuter...</option>
+                                            <option th:each="c : ${commuters}" th:value="${c.id}" th:text="${c.name}">John</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-primary btn-sm">Assign</button>
+                                    </form>
+                                    <span th:if="${v.status.name() != 'CREATED'}" style="color: var(--text-muted); font-size: 0.8rem;">-</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 3: ROUTE & TRIP SCHEDULING
+             ========================================== -->
+        <div id="tab-transit" class="tab-content" th:classappend="${activeTab == 'transit' ? 'active' : ''}">
+            <div class="split-forms-grid">
+                <!-- Add Route Form -->
+                <div class="card-form">
+                    <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;">Add Transit Route</h3>
+                    <form th:action="@{/admin/routes/create}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                        <div class="form-group">
+                            <label class="form-label" for="rOrigin">Origin Terminal</label>
+                            <input type="text" id="rOrigin" name="origin" class="form-control" placeholder="e.g. Campus" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="rDest">Destination Terminal</label>
+                            <input type="text" id="rDest" name="destination" class="form-control" placeholder="e.g. Cyber City" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="rDist">Distance (km)</label>
+                            <input type="number" id="rDist" name="distanceKm" step="0.1" min="0.5" max="500" class="form-control" placeholder="18.5" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="rMode">Transit Mode</label>
+                            <select id="rMode" name="mode" class="form-select" required>
+                                <option value="BUS" selected>Bus Shuttle</option>
+                                <option value="METRO">Metro Train</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Create Route</button>
+                    </form>
+                </div>
+
+                <!-- Schedule Trip Form -->
+                <div class="card-form">
+                    <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;">Schedule Trip Departure</h3>
+                    <form th:action="@{/admin/trips/create}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                        <div class="form-group">
+                            <label class="form-label" for="tripRoute">Select Route</label>
+                            <select id="tripRoute" name="routeId" class="form-select" required>
+                                <option value="" disabled selected>-- Choose Route --</option>
+                                <option th:each="r : ${routes}" th:value="${r.id}" th:text="${r.origin + ' → ' + r.destination + ' (' + r.mode + ')'}">
+                                    Campus → Tech Park (BUS)
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="tDep">Departure Time</label>
+                            <input type="datetime-local" id="tDep" name="departureTime" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="tArr">Arrival Time</label>
+                            <input type="datetime-local" id="tArr" name="arrivalTime" class="form-control" required>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label" for="tSeats">Total Seats</label>
+                                <input type="number" id="tSeats" name="totalSeats" min="1" max="200" class="form-control" value="40" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="tFare">Fare (₹)</label>
+                                <input type="number" id="tFare" name="fare" step="0.50" min="1" max="1000" class="form-control" value="45.00" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-secondary" style="width: 100%;">Schedule Trip</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Scheduled Trips Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">Scheduled Transit Departures</div>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);" th:text="${trips.size() + ' scheduled trip(s)'}">0 trips</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Route</th>
+                                <th>Mode</th>
+                                <th>Departure Time</th>
+                                <th>Arrival Time</th>
+                                <th>Seat Occupancy</th>
+                                <th>Fare</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="t : ${trips}">
+                                <td>
+                                    <strong th:text="${t.route.origin + ' → ' + t.route.destination}">Campus → Tech Park</strong>
+                                </td>
+                                <td>
+                                    <span class="badge" th:text="${t.route.mode}">BUS</span>
+                                </td>
+                                <td th:text="${#temporals.format(t.departureTime, 'MMM dd, yyyy HH:mm')}">Oct 05, 09:00</td>
+                                <td th:text="${#temporals.format(t.arrivalTime, 'MMM dd, yyyy HH:mm')}">Oct 05, 09:45</td>
+                                <td>
+                                    <strong th:text="${t.availableSeats}">40</strong> / <span th:text="${t.totalSeats}">40</span> available
+                                </td>
+                                <td style="font-weight: 800; color: var(--primary);">₹<span th:text="${#numbers.formatDecimal(t.fare, 1, 2)}">45.00</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 4: TAXI RIDE AUDITS
+             ========================================== -->
+        <div id="tab-rides" class="tab-content" th:classappend="${activeTab == 'rides' ? 'active' : ''}">
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">Taxi Ride Settlement Audit Trail</div>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Verified driver and meter fare records</span>
+                </div>
+
+                <div th:if="${rides.isEmpty()}" style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+                    No taxi ride settlements recorded yet.
+                </div>
+
+                <div th:if="${!rides.isEmpty()}" class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Ride ID</th>
+                                <th>Timestamp</th>
+                                <th>Commuter</th>
+                                <th>Driver Name</th>
+                                <th>Vehicle Reg #</th>
+                                <th>Route (Pickup → Drop)</th>
+                                <th>Fare Settled</th>
+                                <th>Voucher Reference</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="r : ${rides}">
+                                <td><code>#RD-<span th:text="${r.id}">1</span></code></td>
+                                <td th:text="${#temporals.format(r.rideTime, 'MMM dd, yyyy HH:mm')}">Oct 04, 10:15</td>
+                                <td>
+                                    <strong th:text="${r.user.name}">John Doe</strong>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);" th:text="${r.user.email}">user@mobility.com</div>
+                                </td>
+                                <td th:text="${r.driverName}">Ramesh Kumar</td>
+                                <td><code><span th:text="${r.vehicleNumber}">MH-02-CB-1234</span></code></td>
+                                <td th:text="${r.pickupLocation + ' → ' + r.dropLocation}">Main Gate → Tech Park</td>
+                                <td style="font-weight: 800; color: var(--success);">₹<span th:text="${#numbers.formatDecimal(r.fare, 1, 2)}">50.00</span></td>
+                                <td><code><span th:text="${r.voucher.code}">VCH-123</span></code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="credits">Made by <strong>Anannya Salvi</strong> • 2026</div>
+            <div>Mobility Wallet | Enterprise Prepaid Transit Allowance &amp; Ticketing Platform</div>
+        </div>
+    </footer>
+
+    <!-- Analytics Chart.js Initialization & Tab Switching -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const dailyLabels = /*[[${analytics.dailySpendLabels}]]*/ [];
+        const dailyData = /*[[${analytics.dailySpendValues}]]*/ [];
+
+        const createdCount = /*[[${analytics.createdVouchersCount}]]*/ 0;
+        const assignedCount = /*[[${analytics.assignedVouchersCount}]]*/ 0;
+        const redeemedCount = /*[[${analytics.redeemedVouchersCount}]]*/ 0;
+        const expiredCount = /*[[${analytics.expiredVouchersCount}]]*/ 0;
+
+        const routeLabels = /*[[${analytics.routeLabels}]]*/ [];
+        const routeRevs = /*[[${analytics.routeRevenues}]]*/ [];
+        const routeLoads = /*[[${analytics.routeLoadFactors}]]*/ [];
+        /*]]>*/
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Chart 1: Daily Spend
+            const ctx1 = document.getElementById('dailySpendChart');
+            const empty1 = document.getElementById('dailySpendEmpty');
+            const isDailySpendEmpty = !dailyData || dailyData.length === 0 || dailyData.every(v => Number(v) === 0);
+            if (ctx1 && empty1) {
+                if (isDailySpendEmpty) {
+                    ctx1.style.display = 'none';
+                    empty1.style.display = 'flex';
+                } else {
+                    ctx1.style.display = 'block';
+                    empty1.style.display = 'none';
+                    new Chart(ctx1, {
+                        type: 'bar',
+                        data: {
+                            labels: dailyLabels,
+                            datasets: [{
+                                label: 'Daily Spend (₹)',
+                                data: dailyData,
+                                backgroundColor: 'rgba(79, 70, 229, 0.75)',
+                                borderColor: '#4f46e5',
+                                borderWidth: 1,
+                                borderRadius: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0,
+                                        callback: function (value) {
+                                            if (Math.floor(value) === value) {
+                                                return '₹' + Number(value).toLocaleString('en-IN');
+                                            }
+                                             return '';
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            return ' Daily Spend: ₹' + Number(context.raw).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Chart 2: Voucher Status Funnel
+            const ctx2 = document.getElementById('voucherStatusChart');
+            const empty2 = document.getElementById('voucherStatusEmpty');
+            const totalStatusCount = createdCount + assignedCount + redeemedCount + expiredCount;
+            if (ctx2 && empty2) {
+                if (totalStatusCount === 0) {
+                    ctx2.style.display = 'none';
+                    empty2.style.display = 'flex';
+                } else {
+                    ctx2.style.display = 'block';
+                    empty2.style.display = 'none';
+                    new Chart(ctx2, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Created (Pool)', 'Assigned', 'Redeemed', 'Expired'],
+                            datasets: [{
+                                data: [createdCount, assignedCount, redeemedCount, expiredCount],
+                                backgroundColor: ['#f59e0b', '#0ea5e9', '#7c3aed', '#94a3b8']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'bottom' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            const val = Number(context.raw) || 0;
+                                            const pct = totalStatusCount > 0 ? ((val / totalStatusCount) * 100).toFixed(1) : '0.0';
+                                            return ` ${context.label}: ${val} (${pct}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Chart 3: Route Revenue
+            const ctx3 = document.getElementById('routeRevenueChart');
+            const empty3 = document.getElementById('routeRevenueEmpty');
+            const isRouteRevEmpty = !routeLabels || routeLabels.length === 0 || !routeRevs || routeRevs.length === 0 || routeRevs.every(v => Number(v) === 0);
+            if (ctx3 && empty3) {
+                if (isRouteRevEmpty) {
+                    ctx3.style.display = 'none';
+                    empty3.style.display = 'flex';
+                } else {
+                    ctx3.style.display = 'block';
+                    empty3.style.display = 'none';
+                    new Chart(ctx3, {
+                        type: 'bar',
+                        data: {
+                            labels: routeLabels,
+                            datasets: [{
+                                label: 'Gross Bookings (₹)',
+                                data: routeRevs,
+                                backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                                borderColor: '#10b981',
+                                borderWidth: 1,
+                                borderRadius: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0,
+                                        callback: function (value) {
+                                            if (Math.floor(value) === value) {
+                                                return '₹' + Number(value).toLocaleString('en-IN');
+                                            }
+                                            return '';
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            return ' Gross Revenue: ₹' + Number(context.raw).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Chart 4: Seat Load Factor
+            const ctx4 = document.getElementById('seatLoadFactorChart');
+            const empty4 = document.getElementById('seatLoadFactorEmpty');
+            const isRouteLoadEmpty = !routeLabels || routeLabels.length === 0 || !routeLoads || routeLoads.length === 0 || routeLoads.every(v => Number(v) === 0);
+            if (ctx4 && empty4) {
+                if (isRouteLoadEmpty) {
+                    ctx4.style.display = 'none';
+                    empty4.style.display = 'flex';
+                } else {
+                    ctx4.style.display = 'block';
+                    empty4.style.display = 'none';
+                    new Chart(ctx4, {
+                        type: 'bar',
+                        data: {
+                            labels: routeLabels,
+                            datasets: [{
+                                label: 'Load Factor (%)',
+                                data: routeLoads,
+                                backgroundColor: 'rgba(14, 165, 233, 0.75)',
+                                borderColor: '#0ea5e9',
+                                borderWidth: 1,
+                                borderRadius: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    min: 0,
+                                    max: 100,
+                                    ticks: {
+                                        precision: 0,
+                                        stepSize: 20,
+                                        callback: function (value) {
+                                            if (Math.floor(value) === value) {
+                                                return value + '%';
+                                            }
+                                            return '';
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            return ' Load Factor: ' + context.raw + '%';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Set default date for bulk creation
+            const expInput = document.getElementById('bulkExp');
+            if (expInput) {
+                const d = new Date();
+                d.setDate(d.getDate() + 30);
+                expInput.value = d.toISOString().split('T')[0];
+            }
+            const singleExp = document.getElementById('vExp');
+            if (singleExp) {
+                const d = new Date();
+                d.setDate(d.getDate() + 30);
+                singleExp.value = d.toISOString().split('T')[0];
+            }
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+            if (targetBtn) targetBtn.classList.add('active');
+
+            const targetContent = document.getElementById('tab-' + tabId);
+            if (targetContent) targetContent.classList.add('active');
+
+            // Update URL without reload
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tabId);
+            window.history.replaceState({}, '', url);
+        }
+    </script>
+</body>
+</html>

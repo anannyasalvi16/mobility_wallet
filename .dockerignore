@@ -1,0 +1,44 @@
+# ==============================================================================
+# .dockerignore for Mobility Wallet Platform
+# ==============================================================================
+
+# Version Control
+.git/
+.gitignore
+
+# Build Output & Packaged Binaries
+target/
+*.jar
+*.war
+
+# Environment Files & Local Secrets
+.env
+.env.*
+.env.local
+*.log
+
+# IDE & Editor Directories
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.settings/
+.classpath
+.project
+.apt_generated
+.springBeans
+.factorypath
+
+# OS-Specific Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Documentation & Markdown Files
+*.md
+
+# Container Definitions
+Dockerfile
+.dockerignore
+docker-compose*.yml

@@ -1,0 +1,43 @@
+/* ==========================================================================
+   Mobility Wallet | Official Theme Design Tokens
+   Define colours ONLY as CSS variables in this file.
+   All other stylesheets, templates, and SVGs reference these variables or currentColor.
+   ========================================================================== */
+
+:root {
+  /* Core Brand Identity (Required Palette) */
+  --color-primary: #0F172A;       /* deep navy */
+  --color-accent: #FACC15;        /* taxi yellow */
+  --color-bg: #F8FAFC;            /* light background */
+  --color-text: #0F172A;          /* text on light */
+  --color-text-on-dark: #F8FAFC;  /* text on navy */
+
+  /* Supporting System Tokens */
+  --color-accent-hover: #EAB308;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-hover: #CBD5E1;
+  --color-text-muted: #64748B;
+  --color-text-subtle: #94A3B8;
+
+  --color-success: #10B981;
+  --color-success-hover: #059669;
+  --color-success-bg: #ECFDF5;
+  --color-success-border: #A7F3D0;
+  --color-success-text: #065F46;
+
+  --color-warning: #F59E0B;
+  --color-warning-bg: #FFFBEB;
+  --color-warning-border: #FDE68A;
+
+  --color-danger: #EF4444;
+  --color-danger-hover: #DC2626;
+  --color-danger-bg: #FEF2F2;
+  --color-danger-border: #FECACA;
+  --color-danger-text: #991B1B;
+
+  --color-neutral-100: #F1F5F9;
+  --color-neutral-200: #E2E8F0;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1E293B;
+}

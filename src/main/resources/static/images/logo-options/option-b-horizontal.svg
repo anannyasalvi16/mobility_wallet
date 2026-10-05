@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 52" width="100%" height="100%">
+  <style>
+    @import url('/css/theme.css');
+  </style>
+  <g transform="translate(4, 3) scale(0.85)">
+    <!-- Wallet outline -->
+    <rect x="6" y="8" width="52" height="48" rx="10" fill="none" stroke="var(--color-primary)" stroke-width="3.5" />
+    <path d="M 6 22 Q 28 25 58 20" fill="none" stroke="var(--color-primary)" stroke-width="3.5" stroke-linecap="round" />
+    <rect x="52" y="27" width="8" height="12" rx="3.5" fill="var(--color-accent)" stroke="var(--color-primary)" stroke-width="2" />
+    <circle cx="55.5" cy="33" r="1.5" fill="var(--color-primary)" />
+
+    <!-- Taxi inside -->
+    <rect x="27" y="25.5" width="10" height="4" rx="2" fill="var(--color-accent)" stroke="var(--color-primary)" stroke-width="1.5" />
+    <path d="M 14 43 L 14 39 C 14 38 15 37 16 37 L 22 37 L 26 30 C 27 29 28.5 29 30 29 L 37 29 C 38.5 29 39.5 29.5 40.5 30.5 L 45 37 L 48 37 C 49 37 50 38 50 39 L 50 43 Z" fill="var(--color-primary)" />
+    <path d="M 28 32 L 35 32 L 38 36 L 25 36 Z" fill="var(--color-bg)" />
+    <circle cx="22" cy="43" r="4.5" fill="var(--color-bg)" stroke="var(--color-primary)" stroke-width="3" />
+    <circle cx="42" cy="43" r="4.5" fill="var(--color-bg)" stroke="var(--color-primary)" stroke-width="3" />
+  </g>
+
+  <!-- Wordmark "Mobility Wallet" -->
+  <text x="62" y="34" font-family="system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="800" letter-spacing="-0.5">
+    <tspan fill="var(--color-primary)">Mobility </tspan>
+    <tspan fill="var(--color-accent)">Wallet</tspan>
+  </text>
+</svg>

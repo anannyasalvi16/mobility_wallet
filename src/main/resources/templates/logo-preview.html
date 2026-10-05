@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Identity &amp; Logo Selection | Mobility Wallet</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="alternate icon" type="image/png" th:href="@{/favicon.png}">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <style>
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .option-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .option-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .option-badge {
+            font-size: 1.15rem;
+            font-weight: 800;
+            padding: 0.4rem 1.1rem;
+            border-radius: var(--radius-full);
+            background: var(--color-primary);
+            color: var(--color-accent);
+            border: 1px solid var(--color-accent);
+        }
+
+        .display-split {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .bg-light-box {
+            background: var(--color-bg);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.75rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .bg-dark-box {
+            background: var(--color-primary);
+            border: 2px solid rgba(248, 250, 252, 0.15);
+            border-radius: var(--radius-md);
+            padding: 1.75rem;
+            box-shadow: var(--shadow-md);
+            color: var(--color-text-on-dark);
+        }
+
+        .box-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .sizes-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px dashed rgba(148, 163, 184, 0.3);
+            flex-wrap: wrap;
+        }
+
+        .size-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .size-item span {
+            opacity: 0.85;
+        }
+
+        .horizontal-logo-preview {
+            max-width: 250px;
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .file-links {
+            margin-top: 0.85rem;
+            font-size: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            opacity: 0.8;
+        }
+
+        .file-links a {
+            color: inherit;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG Vector Definitions - Bound dynamically to theme.css CSS variables -->
+    <svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
+        <!-- OPTION A: Taxi Light -->
+        <symbol id="opt-a-icon" viewBox="0 0 64 64">
+            <line x1="24" y1="13" x2="20" y2="7" stroke="var(--color-accent)" stroke-width="3.5" stroke-linecap="round" />
+            <line x1="40" y1="13" x2="44" y2="7" stroke="var(--color-accent)" stroke-width="3.5" stroke-linecap="round" />
+            <rect x="12" y="18" width="40" height="26" rx="8" fill="var(--color-primary)" />
+            <rect x="16" y="44" width="32" height="4.5" rx="2" fill="var(--color-primary)" />
+            <rect x="21" y="48.5" width="5.5" height="4.5" rx="1.5" fill="var(--color-primary)" />
+            <rect x="37.5" y="48.5" width="5.5" height="4.5" rx="1.5" fill="var(--color-primary)" />
+            <line x1="25" y1="24.5" x2="39" y2="24.5" stroke="var(--color-accent)" stroke-width="3" stroke-linecap="round" />
+            <line x1="25" y1="29" x2="36" y2="29" stroke="var(--color-accent)" stroke-width="3" stroke-linecap="round" />
+            <path d="M 28 24.5 L 28 34 C 34.5 34 34.5 24.5 28 24.5" fill="none" stroke="var(--color-accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="29.5" y1="33.5" x2="37.5" y2="40" stroke="var(--color-accent)" stroke-width="3" stroke-linecap="round" />
+        </symbol>
+
+        <symbol id="opt-a-icon-dark" viewBox="0 0 64 64">
+            <line x1="24" y1="13" x2="20" y2="7" stroke="var(--color-accent)" stroke-width="3.5" stroke-linecap="round" />
+            <line x1="40" y1="13" x2="44" y2="7" stroke="var(--color-accent)" stroke-width="3.5" stroke-linecap="round" />
+            <rect x="12" y="18" width="40" height="26" rx="8" fill="var(--color-accent)" />
+            <rect x="16" y="44" width="32" height="4.5" rx="2" fill="var(--color-text-on-dark)" />
+            <rect x="21" y="48.5" width="5.5" height="4.5" rx="1.5" fill="var(--color-text-on-dark)" />
+            <rect x="37.5" y="48.5" width="5.5" height="4.5" rx="1.5" fill="var(--color-text-on-dark)" />
+            <line x1="25" y1="24.5" x2="39" y2="24.5" stroke="var(--color-primary)" stroke-width="3" stroke-linecap="round" />
+            <line x1="25" y1="29" x2="36" y2="29" stroke="var(--color-primary)" stroke-width="3" stroke-linecap="round" />
+            <path d="M 28 24.5 L 28 34 C 34.5 34 34.5 24.5 28 24.5" fill="none" stroke="var(--color-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="29.5" y1="33.5" x2="37.5" y2="40" stroke="var(--color-primary)" stroke-width="3" stroke-linecap="round" />
+        </symbol>
+
+        <symbol id="opt-a-horizontal" viewBox="0 0 250 52">
+            <use href="#opt-a-icon" x="2" y="3" width="46" height="46" />
+            <text x="56" y="34" font-family="system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif" font-size="23" font-weight="800" letter-spacing="-0.5">
+                <tspan fill="var(--color-primary)">Mobility </tspan>
+                <tspan fill="var(--color-accent)">Wallet</tspan>
+            </text>
+        </symbol>
+
+        <symbol id="opt-a-horizontal-dark" viewBox="0 0 250 52">
+            <use href="#opt-a-icon-dark" x="2" y="3" width="46" height="46" />
+            <text x="56" y="34" font-family="system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif" font-size="23" font-weight="800" letter-spacing="-0.5">
+                <tspan fill="var(--color-text-on-dark)">Mobility </tspan>
+                <tspan fill="var(--color-accent)">Wallet</tspan>
+            </text>
+        </symbol>
+
+        <!-- OPTION B: Taxi Wallet -->
+        <symbol id="opt-b-icon" viewBox="0 0 64 64">
+            <rect x="6" y="8" width="52" height="48" rx="10" fill="none" stroke="var(--color-primary)" stroke-width="3.5" />
+            <path d="M 6 22 Q 28 25 58 20" fill="none" stroke="var(--color-primary)" stroke-width="3.5" stroke-linecap="round" />
+            <rect x="52" y="27" width="8" height="12" rx="3.5" fill="var(--color-accent)" stroke="var(--color-primary)" stroke-width="2" />
+            <circle cx="55.5" cy="33" r="1.5" fill="var(--color-primary)" />
+            <rect x="27" y="25.5" width="10" height="4" rx="2" fill="var(--color-accent)" stroke="var(--color-primary)" stroke-width="1.5" />
+            <path d="M 14 43 L 14 39 C 14 38 15 37 16 37 L 22 37 L 26 30 C 27 29 28.5 29 30 29 L 37 29 C 38.5 29 39.5 29.5 40.5 30.5 L 45 37 L 48 37 C 49 37 50 38 50 39 L 50 43 Z" fill="var(--color-primary)" />
+            <path d="M 28 32 L 35 32 L 38 36 L 25 36 Z" fill="var(--color-bg)" />
+            <circle cx="22" cy="43" r="4.5" fill="var(--color-bg)" stroke="var(--color-primary)" stroke-width="3" />
+            <circle cx="42" cy="43" r="4.5" fill="var(--color-bg)" stroke="var(--color-primary)" stroke-width="3" />
+        </symbol>
+
+        <symbol id="opt-b-icon-dark" viewBox="0 0 64 64">
+            <rect x="6" y="8" width="52" height="48" rx="10" fill="none" stroke="var(--color-text-on-dark)" stroke-width="3.5" />
+            <path d="M 6 22 Q 28 25 58 20" fill="none" stroke="var(--color-text-on-dark)" stroke-width="3.5" stroke-linecap="round" />
+            <rect x="52" y="27" width="8" height="12" rx="3.5" fill="var(--color-accent)" stroke="var(--color-text-on-dark)" stroke-width="2" />
+            <circle cx="55.5" cy="33" r="1.5" fill="var(--color-primary)" />
+            <rect x="27" y="25.5" width="10" height="4" rx="2" fill="var(--color-accent)" />
+            <path d="M 14 43 L 14 39 C 14 38 15 37 16 37 L 22 37 L 26 30 C 27 29 28.5 29 30 29 L 37 29 C 38.5 29 39.5 29.5 40.5 30.5 L 45 37 L 48 37 C 49 37 50 38 50 39 L 50 43 Z" fill="var(--color-accent)" />
+            <path d="M 28 32 L 35 32 L 38 36 L 25 36 Z" fill="var(--color-primary)" />
+            <circle cx="22" cy="43" r="4.5" fill="var(--color-primary)" stroke="var(--color-accent)" stroke-width="3" />
+            <circle cx="42" cy="43" r="4.5" fill="var(--color-primary)" stroke="var(--color-accent)" stroke-width="3" />
+        </symbol>
+
+        <symbol id="opt-b-horizontal" viewBox="0 0 250 52">
+            <use href="#opt-b-icon" x="2" y="3" width="46" height="46" />
+            <text x="56" y="34" font-family="system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif" font-size="23" font-weight="800" letter-spacing="-0.5">
+                <tspan fill="var(--color-primary)">Mobility </tspan>
+                <tspan fill="var(--color-accent)">Wallet</tspan>
+            </text>
+        </symbol>
+
+        <symbol id="opt-b-horizontal-dark" viewBox="0 0 250 52">
+            <use href="#opt-b-icon-dark" x="2" y="3" width="46" height="46" />
+            <text x="56" y="34" font-family="system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif" font-size="23" font-weight="800" letter-spacing="-0.5">
+                <tspan fill="var(--color-text-on-dark)">Mobility </tspan>
+                <tspan fill="var(--color-accent)">Wallet</tspan>
+            </text>
+        </symbol>
+
+        <!-- OPTION C: Taxi Wallet Badge -->
+        <symbol id="opt-c-icon" viewBox="0 0 64 64">
+            <rect x="4" y="4" width="56" height="56" rx="15" fill="var(--color-primary)" />
+            <rect x="9" y="11" width="46" height="42" rx="8" fill="none" stroke="var(--color-text-on-dark)" stroke-width="2" stroke-opacity="0.35" />
+            <path d="M 9 22 Q 26 25 50 21" fill="none" stroke="var(--color-text-on-dark)" stroke-width="2" stroke-opacity="0.35" stroke-linecap="round" />
+            <rect x="47" y="26.5" width="8" height="11" rx="3" fill="var(--color-accent)" />
+            <circle cx="50.5" cy="32" r="1.3" fill="var(--color-primary)" />
+            <line x1="26" y1="22" x2="23" y2="18" stroke="var(--color-accent)" stroke-width="2.5" stroke-linecap="round" />
+            <line x1="38" y1="22" x2="41" y2="18" stroke="var(--color-accent)" stroke-width="2.5" stroke-linecap="round" />
+            <rect x="27" y="25" width="10" height="4" rx="2" fill="var(--color-accent)" />
+            <path d="M 14 43 L 14 39 C 14 38 15 37 16 37 L 22 37 L 26 30 C 27 29 28.5 29 30 29 L 37 29 C 38.5 29 39.5 29.5 40.5 30.5 L 45 37 L 48 37 C 49 37 50 38 50 39 L 50 43 Z" fill="var(--color-accent)" />
+            <path d="M 28 32 L 35 32 L 38 36 L 25 36 Z" fill="var(--color-primary)" />
+            <circle cx="22" cy="43" r="4.5" fill="var(--color-primary)" stroke="var(--color-accent)" stroke-width="2.5" />
+            <circle cx="42" cy="43" r="4.5" fill="var(--color-primary)" stroke="var(--color-accent)" stroke-width="2.5" />
+        </symbol>
+
+        <symbol id="opt-c-icon-dark" viewBox="0 0 64 64">
+            <rect x="4" y="4" width="56" height="56" rx="15" fill="var(--color-primary)" stroke="var(--color-accent)" stroke-width="2.5" />
+            <rect x="9" y="11" width="46" height="42" rx="8" fill="none" stroke="var(--color-text-on-dark)" stroke-width="2" stroke-opacity="0.35" />
+            <path d="M 9 22 Q 26 25 50 21" fill="none" stroke="var(--color-text-on-dark)" stroke-width="2" stroke-opacity="0.35" stroke-linecap="round" />
+            <rect x="47" y="26.5" width="8" height="11" rx="3" fill="var(--color-accent)" />
+            <circle cx="50.5" cy="32" r="1.3" fill="var(--color-primary)" />
+            <line x1="26" y1="22" x2="23" y2="18" stroke="var(--color-accent)" stroke-width="2.5" stroke-linecap="round" />
+            <line x1="38" y1="22" x2="41" y2="18" stroke="var(--color-accent)" stroke-width="2.5" stroke-linecap="round" />
+            <rect x="27" y="25" width="10" height="4" rx="2" fill="var(--color-accent)" />
+            <path d="M 14 43 L 14 39 C 14 38 15 37 16 37 L 22 37 L 26 30 C 27 29 28.5 29 30 29 L 37 29 C 38.5 29 39.5 29.5 40.5 30.5 L 45 37 L 48 37 C 49 37 50 38 50 39 L 50 43 Z" fill="var(--color-accent)" />
+            <path d="M 28 32 L 35 32 L 38 36 L 25 36 Z" fill="var(--color-primary)" />
+            <circle cx="22" cy="43" r="4.5" fill="var(--color-primary)" stroke="var(--color-accent)" stroke-width="2.5" />
+            <circle cx="42" cy="43" r="4.5" fill="var(--color-primary)" stroke="var(--color-accent)" stroke-width="2.5" />
+        </symbol>
+
+        <symbol id="opt-c-horizontal" viewBox="0 0 250 52">
+            <use href="#opt-c-icon" x="2" y="3" width="46" height="46" />
+            <text x="56" y="34" font-family="system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif" font-size="23" font-weight="800" letter-spacing="-0.5">
+                <tspan fill="var(--color-primary)">Mobility </tspan>
+                <tspan fill="var(--color-accent)">Wallet</tspan>
+            </text>
+        </symbol>
+
+        <symbol id="opt-c-horizontal-dark" viewBox="0 0 250 52">
+            <use href="#opt-c-icon-dark" x="2" y="3" width="46" height="46" />
+            <text x="56" y="34" font-family="system-ui, -apple-system, 'Inter', 'Segoe UI', Roboto, sans-serif" font-size="23" font-weight="800" letter-spacing="-0.5">
+                <tspan fill="var(--color-text-on-dark)">Mobility </tspan>
+                <tspan fill="var(--color-accent)">Wallet</tspan>
+            </text>
+        </symbol>
+    </svg>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <a th:href="@{/}" class="brand-logo">
+                <img th:src="@{/images/logo.svg}" alt="Mobility Wallet" height="32" class="brand-logo-img">
+                <span class="brand-logo-text">Mobility Wallet</span>
+            </a>
+            <div class="nav-actions">
+                <a th:href="@{/login}" class="btn btn-secondary btn-sm">Sign In</a>
+                <a th:href="@{/admin/dashboard}" class="btn btn-primary btn-sm">Admin Dashboard</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header" style="text-align: center; display: block; margin: 2rem 0 3rem;">
+            <div style="display: inline-block; font-size: 0.85rem; font-weight: 800; color: var(--color-primary); background: var(--color-accent); padding: 0.3rem 0.8rem; border-radius: var(--radius-sm); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.75rem;">
+                Design Review &amp; Selection (Phase 1)
+            </div>
+            <h1 class="page-title" style="font-size: 2.25rem; margin-bottom: 0.75rem; color: var(--color-primary);">New Brand Identity Options</h1>
+            <p class="page-subtitle" style="max-width: 680px; margin: 0 auto; line-height: 1.6; color: var(--text-secondary);">
+                Handcrafted minimal fintech marks utilizing <strong>Navy</strong> (<code>--color-primary</code>) and <strong>Taxi Yellow</strong> (<code>--color-accent</code>). Compare all 3 options at Large (96px), Medium (48px), and Small (32px) on both Light and Dark backgrounds.
+            </p>
+        </div>
+
+        <div class="preview-grid">
+            <!-- OPTION A: Taxi Light -->
+            <div class="option-card" id="option-a-card">
+                <div class="option-header">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span class="option-badge">Option A</span>
+                            <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--color-primary); margin: 0;">"Taxi Light"</h2>
+                        </div>
+                        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-top: 0.4rem;">
+                            A taxi roof-light sign in navy with a bold rupee symbol (₹) centred in yellow, mounted on two feet with 2 short ray lines indicating it is illuminated.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="display-split">
+                    <!-- Light Box -->
+                    <div class="bg-light-box">
+                        <div class="box-label" style="color: var(--color-primary);">Light Background (--color-bg)</div>
+                        <svg class="horizontal-logo-preview" viewBox="0 0 260 52"><use href="#opt-a-horizontal" /></svg>
+                        
+                        <div class="sizes-row">
+                            <div class="size-item">
+                                <svg style="width: 96px; height: 96px;" viewBox="0 0 64 64"><use href="#opt-a-icon" /></svg>
+                                <span>Large (96px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 48px; height: 48px;" viewBox="0 0 64 64"><use href="#opt-a-icon" /></svg>
+                                <span>Medium (48px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 32px; height: 32px;" viewBox="0 0 64 64"><use href="#opt-a-icon" /></svg>
+                                <span>Small (32px)</span>
+                            </div>
+                        </div>
+
+                        <div class="file-links">
+                            <span>Raw SVGs:</span>
+                            <a th:href="@{/images/logo-options/option-a-icon.svg}" target="_blank">option-a-icon.svg</a>
+                            <a th:href="@{/images/logo-options/option-a-horizontal.svg}" target="_blank">option-a-horizontal.svg</a>
+                        </div>
+                    </div>
+
+                    <!-- Dark Box -->
+                    <div class="bg-dark-box">
+                        <div class="box-label" style="color: var(--color-text-on-dark);">Dark Background (--color-primary)</div>
+                        <svg class="horizontal-logo-preview" viewBox="0 0 260 52"><use href="#opt-a-horizontal-dark" /></svg>
+
+                        <div class="sizes-row" style="border-top-color: rgba(248, 250, 252, 0.2);">
+                            <div class="size-item">
+                                <svg style="width: 96px; height: 96px;" viewBox="0 0 64 64"><use href="#opt-a-icon-dark" /></svg>
+                                <span>Large (96px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 48px; height: 48px;" viewBox="0 0 64 64"><use href="#opt-a-icon-dark" /></svg>
+                                <span>Medium (48px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 32px; height: 32px;" viewBox="0 0 64 64"><use href="#opt-a-icon-dark" /></svg>
+                                <span>Small (32px)</span>
+                            </div>
+                        </div>
+
+                        <div class="file-links">
+                            <span>Raw SVGs:</span>
+                            <a th:href="@{/images/logo-options/option-a-icon-dark.svg}" target="_blank" style="color: var(--color-accent);">option-a-icon-dark.svg</a>
+                            <a th:href="@{/images/logo-options/option-a-horizontal-dark.svg}" target="_blank" style="color: var(--color-accent);">option-a-horizontal-dark.svg</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OPTION B: Taxi Wallet -->
+            <div class="option-card" id="option-b-card">
+                <div class="option-header">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span class="option-badge">Option B</span>
+                            <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--color-primary); margin: 0;">"Taxi Wallet"</h2>
+                        </div>
+                        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-top: 0.4rem;">
+                            A navy wallet outline (rounded rectangle, flap, side clasp) with a recognisable side-view taxi inside (yellow roof light, cabin, two wheels).
+                        </p>
+                    </div>
+                </div>
+
+                <div class="display-split">
+                    <!-- Light Box -->
+                    <div class="bg-light-box">
+                        <div class="box-label" style="color: var(--color-primary);">Light Background (--color-bg)</div>
+                        <svg class="horizontal-logo-preview" viewBox="0 0 260 52"><use href="#opt-b-horizontal" /></svg>
+
+                        <div class="sizes-row">
+                            <div class="size-item">
+                                <svg style="width: 96px; height: 96px;" viewBox="0 0 64 64"><use href="#opt-b-icon" /></svg>
+                                <span>Large (96px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 48px; height: 48px;" viewBox="0 0 64 64"><use href="#opt-b-icon" /></svg>
+                                <span>Medium (48px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 32px; height: 32px;" viewBox="0 0 64 64"><use href="#opt-b-icon" /></svg>
+                                <span>Small (32px)</span>
+                            </div>
+                        </div>
+
+                        <div class="file-links">
+                            <span>Raw SVGs:</span>
+                            <a th:href="@{/images/logo-options/option-b-icon.svg}" target="_blank">option-b-icon.svg</a>
+                            <a th:href="@{/images/logo-options/option-b-horizontal.svg}" target="_blank">option-b-horizontal.svg</a>
+                        </div>
+                    </div>
+
+                    <!-- Dark Box -->
+                    <div class="bg-dark-box">
+                        <div class="box-label" style="color: var(--color-text-on-dark);">Dark Background (--color-primary)</div>
+                        <svg class="horizontal-logo-preview" viewBox="0 0 260 52"><use href="#opt-b-horizontal-dark" /></svg>
+
+                        <div class="sizes-row" style="border-top-color: rgba(248, 250, 252, 0.2);">
+                            <div class="size-item">
+                                <svg style="width: 96px; height: 96px;" viewBox="0 0 64 64"><use href="#opt-b-icon-dark" /></svg>
+                                <span>Large (96px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 48px; height: 48px;" viewBox="0 0 64 64"><use href="#opt-b-icon-dark" /></svg>
+                                <span>Medium (48px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 32px; height: 32px;" viewBox="0 0 64 64"><use href="#opt-b-icon-dark" /></svg>
+                                <span>Small (32px)</span>
+                            </div>
+                        </div>
+
+                        <div class="file-links">
+                            <span>Raw SVGs:</span>
+                            <a th:href="@{/images/logo-options/option-b-icon-dark.svg}" target="_blank" style="color: var(--color-accent);">option-b-icon-dark.svg</a>
+                            <a th:href="@{/images/logo-options/option-b-horizontal-dark.svg}" target="_blank" style="color: var(--color-accent);">option-b-horizontal-dark.svg</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OPTION C: Taxi Wallet Badge -->
+            <div class="option-card" id="option-c-card">
+                <div class="option-header">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span class="option-badge">Option C</span>
+                            <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--color-primary); margin: 0;">"Taxi Wallet Badge"</h2>
+                        </div>
+                        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-top: 0.4rem;">
+                            The Taxi Wallet inside a rounded-square app-icon badge with solid navy background and yellow taxi - tailored for favicons and mobile home-screens.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="display-split">
+                    <!-- Light Box -->
+                    <div class="bg-light-box">
+                        <div class="box-label" style="color: var(--color-primary);">Light Background (--color-bg)</div>
+                        <svg class="horizontal-logo-preview" viewBox="0 0 260 52"><use href="#opt-c-horizontal" /></svg>
+
+                        <div class="sizes-row">
+                            <div class="size-item">
+                                <svg style="width: 96px; height: 96px;" viewBox="0 0 64 64"><use href="#opt-c-icon" /></svg>
+                                <span>Large (96px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 48px; height: 48px;" viewBox="0 0 64 64"><use href="#opt-c-icon" /></svg>
+                                <span>Medium (48px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 32px; height: 32px;" viewBox="0 0 64 64"><use href="#opt-c-icon" /></svg>
+                                <span>Small (32px)</span>
+                            </div>
+                        </div>
+
+                        <div class="file-links">
+                            <span>Raw SVGs:</span>
+                            <a th:href="@{/images/logo-options/option-c-icon.svg}" target="_blank">option-c-icon.svg</a>
+                            <a th:href="@{/images/logo-options/option-c-horizontal.svg}" target="_blank">option-c-horizontal.svg</a>
+                        </div>
+                    </div>
+
+                    <!-- Dark Box -->
+                    <div class="bg-dark-box">
+                        <div class="box-label" style="color: var(--color-text-on-dark);">Dark Background (--color-primary)</div>
+                        <svg class="horizontal-logo-preview" viewBox="0 0 260 52"><use href="#opt-c-horizontal-dark" /></svg>
+
+                        <div class="sizes-row" style="border-top-color: rgba(248, 250, 252, 0.2);">
+                            <div class="size-item">
+                                <svg style="width: 96px; height: 96px;" viewBox="0 0 64 64"><use href="#opt-c-icon-dark" /></svg>
+                                <span>Large (96px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 48px; height: 48px;" viewBox="0 0 64 64"><use href="#opt-c-icon-dark" /></svg>
+                                <span>Medium (48px)</span>
+                            </div>
+                            <div class="size-item">
+                                <svg style="width: 32px; height: 32px;" viewBox="0 0 64 64"><use href="#opt-c-icon-dark" /></svg>
+                                <span>Small (32px)</span>
+                            </div>
+                        </div>
+
+                        <div class="file-links">
+                            <span>Raw SVGs:</span>
+                            <a th:href="@{/images/logo-options/option-c-icon-dark.svg}" target="_blank" style="color: var(--color-accent);">option-c-icon-dark.svg</a>
+                            <a th:href="@{/images/logo-options/option-c-horizontal-dark.svg}" target="_blank" style="color: var(--color-accent);">option-c-horizontal-dark.svg</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="credits">Made by <strong>Anannya Salvi</strong> • 2026</div>
+            <div>Mobility Wallet | Enterprise Prepaid Transit Allowance &amp; Ticketing Platform</div>
+        </div>
+    </footer>
+</body>
+</html>

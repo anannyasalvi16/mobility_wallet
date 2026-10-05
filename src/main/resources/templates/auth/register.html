@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0F172A">
+    <title>Create Account | Mobility Wallet</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="alternate icon" type="image/png" th:href="@{/favicon.png}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="auth-wrapper">
+    <div class="auth-card">
+        <div style="text-align: center; margin-bottom: 1.75rem;">
+            <img th:src="@{/images/logo.svg}" alt="Mobility Wallet" height="38" style="margin: 0 auto 1.25rem; display: block;">
+            <h1 style="font-size: 1.4rem; font-weight: 700; color: var(--neutral-900); letter-spacing: -0.3px;">Create Commuter Account</h1>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">Automatic ₹0.00 Digital Wallet Provisioning</p>
+        </div>
+
+        <!-- Error banner without emojis -->
+        <div th:if="${errorMessage}" class="alert alert-danger">
+            <span th:text="${errorMessage}">An error occurred during registration.</span>
+        </div>
+
+        <!-- Registration form with CSRF -->
+        <form th:action="@{/register}" th:object="${registerRequest}" method="post">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <div class="form-group">
+                <label class="form-label" for="name">Full Name</label>
+                <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="Jane Doe" required>
+                <small th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color: var(--danger); font-size: 0.8rem;"></small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">Work or College Email</label>
+                <input type="email" id="email" th:field="*{email}" class="form-control" placeholder="jane@organization.com" required>
+                <small th:if="${#fields.hasErrors('email')}" th:errors="*{email}" style="color: var(--danger); font-size: 0.8rem;"></small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password (Minimum 8 characters)</label>
+                <input type="password" id="password" th:field="*{password}" class="form-control" placeholder="••••••••" required>
+                <small th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color: var(--danger); font-size: 0.8rem;"></small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label" for="phone">Phone Number (Optional)</label>
+                <input type="tel" id="phone" th:field="*{phone}" class="form-control" placeholder="9876543210">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.65rem;">Create Account</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+            Already have an account? <a th:href="@{/login}" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Sign In</a>
+        </div>
+    </div>
+
+    <footer style="margin-top: 2rem; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+        <div>Made by <strong style="color: var(--neutral-800);">Anannya Salvi</strong> • 2026</div>
+        <div>Mobility Wallet Platform</div>
+    </footer>
+</body>
+</html>

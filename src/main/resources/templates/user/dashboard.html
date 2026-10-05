@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commuter Dashboard | Mobility Wallet</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="alternate icon" type="image/png" th:href="@{/favicon.png}">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <style>
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .route-pill {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            background: var(--neutral-100);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--neutral-700);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .route-pill:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .capacity-bar-container {
+            width: 100%;
+            height: 6px;
+            background: var(--neutral-200);
+            border-radius: var(--radius-xs);
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .capacity-bar {
+            height: 100%;
+            background: var(--success);
+            border-radius: var(--radius-xs);
+        }
+        .capacity-bar.low {
+            background: var(--danger);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <a th:href="@{/user/dashboard}" class="brand-logo">
+                <img th:src="@{/images/logo-dark.svg}" alt="Mobility Wallet" height="32" width="32" class="brand-logo-img">
+                <div class="brand-logo-text">Mobility Wallet <span class="brand-logo-tag">Commuter</span></div>
+            </a>
+            <div class="nav-actions">
+                <div class="user-badge">
+                    <div class="user-avatar" th:text="${#strings.substring(user.name, 0, 1)}">U</div>
+                    <div class="user-details">
+                        <div class="user-name" th:text="${user.name}">John Doe</div>
+                        <div class="user-email" th:text="${user.email}">user@mobility.com</div>
+                    </div>
+                    <span class="badge badge-role-user" style="margin-left: 0.5rem;" th:text="${role}">ROLE_USER</span>
+                </div>
+                <form th:action="@{/logout}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="btn btn-secondary btn-sm">Sign Out</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Flash Alerts -->
+        <div th:if="${successMessage}" class="alert alert-success">
+            <span th:text="${successMessage}">Operation successful!</span>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger">
+            <span th:text="${errorMessage}">An error occurred!</span>
+        </div>
+
+        <!-- Top Metric Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card accent-green">
+                <div class="stat-header">
+                    <span class="stat-label">Active Wallet Balance</span>
+                </div>
+                <div class="stat-value">₹<span th:text="${#numbers.formatDecimal(walletBalance, 1, 2)}">0.00</span></div>
+                <div class="stat-desc">Auto-credited funds &amp; cancellation refunds</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Active Vouchers</span>
+                </div>
+                <div class="stat-value" th:text="${activeVouchers.size()}">0</div>
+                <div class="stat-desc">Available for taxi rides &amp; transit booking</div>
+            </div>
+
+            <div class="stat-card accent-cyan">
+                <div class="stat-header">
+                    <span class="stat-label">Transit Bookings</span>
+                </div>
+                <div class="stat-value" th:text="${bookings.size()}">0</div>
+                <div class="stat-desc">Total scheduled trip reservations</div>
+            </div>
+
+            <div class="stat-card accent-amber">
+                <div class="stat-header">
+                    <span class="stat-label">Completed Taxi Rides</span>
+                </div>
+                <div class="stat-value" th:text="${rides.size()}">0</div>
+                <div class="stat-desc">Voucher-subsidized taxi settlements</div>
+            </div>
+        </div>
+
+        <!-- Tabbed Navigation Bar -->
+        <div class="tab-nav">
+            <button class="tab-btn" data-tab="overview" th:classappend="${activeTab == 'overview' ? 'active' : ''}" onclick="switchTab('overview')">
+                Overview
+            </button>
+            <button class="tab-btn" data-tab="vouchers" th:classappend="${activeTab == 'vouchers' ? 'active' : ''}" onclick="switchTab('vouchers')">
+                My Vouchers &amp; QR (<span th:text="${vouchers.size()}">0</span>)
+            </button>
+            <button class="tab-btn" data-tab="transit" th:classappend="${activeTab == 'transit' ? 'active' : ''}" onclick="switchTab('transit')">
+                Search &amp; Book Transit
+            </button>
+            <button class="tab-btn" data-tab="bookings" th:classappend="${activeTab == 'bookings' ? 'active' : ''}" onclick="switchTab('bookings')">
+                My Bookings &amp; Tickets (<span th:text="${bookings.size()}">0</span>)
+            </button>
+            <button class="tab-btn" data-tab="transactions" th:classappend="${activeTab == 'transactions' ? 'active' : ''}" onclick="switchTab('transactions')">
+                Transaction Ledger (<span th:text="${transactions.size()}">0</span>)
+            </button>
+        </div>
+
+        <!-- ==========================================
+             TAB 1: OVERVIEW
+             ========================================== -->
+        <div id="tab-overview" class="tab-content" th:classappend="${activeTab == 'overview' ? 'active' : ''}">
+            <div class="quick-actions">
+                <button type="button" class="btn btn-primary" onclick="switchTab('transit')">
+                    Search Scheduled Trips
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="openModal('taxiRedeemModal')">
+                    Redeem Voucher for Taxi
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="switchTab('transactions')">
+                    View Complete Ledger
+                </button>
+            </div>
+
+            <!-- Active Vouchers Quick View -->
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">Active Assigned Vouchers</div>
+                    <button class="btn btn-secondary btn-sm" onclick="switchTab('vouchers')">View All Vouchers →</button>
+                </div>
+                <div th:if="${activeVouchers.isEmpty()}" style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                    No active vouchers assigned. Contact your transport administrator to request a travel voucher.
+                </div>
+                <div th:if="${!activeVouchers.isEmpty()}" class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Voucher Code</th>
+                                <th>Initial Amount</th>
+                                <th>Valid Until</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="v : ${activeVouchers}">
+                                <td><code style="font-weight: 700; color: var(--primary);" th:text="${v.code}">VCH-123</code></td>
+                                <td style="font-weight: 700; color: var(--neutral-900);">₹<span th:text="${#numbers.formatDecimal(v.initialValue, 1, 2)}">100.00</span></td>
+                                <td th:text="${v.expiryDate}">2026-11-01</td>
+                                <td>
+                                    <span class="badge" th:classappend="${'badge-' + #strings.toLowerCase(v.status.name())}" th:text="${v.status}">ASSIGNED</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm"
+                                            th:data-code="${v.code}"
+                                            th:data-amount="${v.initialValue}"
+                                            th:data-expiry="${v.expiryDate}"
+                                            th:data-qr="${voucherQrMap.get(v.code)}"
+                                            onclick="openVoucherQrModal(this.getAttribute('data-code'), this.getAttribute('data-amount'), this.getAttribute('data-expiry'), this.getAttribute('data-qr'))">
+                                        View QR Code
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Bookings Quick View -->
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">Recent Transit Bookings</div>
+                    <button class="btn btn-secondary btn-sm" onclick="switchTab('bookings')">View All Bookings →</button>
+                </div>
+                <div th:if="${bookings.isEmpty()}" style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                    No bookings made yet. Click "Search Scheduled Trips" to book your seat.
+                </div>
+                <div th:if="${!bookings.isEmpty()}" class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Booking Ref</th>
+                                <th>Route</th>
+                                <th>Departure Time</th>
+                                <th>Seats</th>
+                                <th>Total Fare</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="b, iter : ${bookings}" th:if="${iter.index < 3}">
+                                <td><code style="font-weight: 700;" th:text="${b.bookingReference}">BKG-123</code></td>
+                                <td th:text="${b.origin + ' → ' + b.destination + ' (' + b.transitMode + ')'}">Campus → Tech Park</td>
+                                <td th:text="${#temporals.format(b.departureTime, 'MMM dd, yyyy HH:mm')}">Oct 05, 09:00</td>
+                                <td th:text="${b.seatCount}">1</td>
+                                <td style="font-weight: 700;">₹<span th:text="${#numbers.formatDecimal(b.totalFare, 1, 2)}">45.00</span></td>
+                                <td>
+                                    <span class="badge" th:classappend="${b.status.name() == 'CONFIRMED' ? 'badge-confirmed' : 'badge-cancelled'}" th:text="${b.status}">CONFIRMED</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 2: MY VOUCHERS & QR
+             ========================================== -->
+        <div id="tab-vouchers" class="tab-content" th:classappend="${activeTab == 'vouchers' ? 'active' : ''}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h2 style="font-size: 1.35rem; font-weight: 700;">Assigned Travel Vouchers</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Display secure QR codes for taxi ride settlements or redeem for transit seats</p>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="openModal('taxiRedeemModal')">
+                    Simulate Taxi Ride Settlement
+                </button>
+            </div>
+
+            <div th:if="${vouchers.isEmpty()}" class="card-form" style="text-align: center; padding: 3rem;">
+                <h3 style="font-size: 1.2rem; font-weight: 700;">No Vouchers Assigned</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                    Your organization administrator has not assigned travel vouchers to your account yet.
+                </p>
+            </div>
+
+            <div th:if="${!vouchers.isEmpty()}" class="voucher-grid">
+                <div class="voucher-card" th:each="v : ${vouchers}">
+                    <div class="voucher-card-header">
+                        <span class="voucher-card-code" th:text="${v.code}">VCH-2026-ABC</span>
+                        <span class="badge" th:classappend="${'badge-' + #strings.toLowerCase(v.status.name())}" th:text="${v.status}">ASSIGNED</span>
+                    </div>
+                    <div class="voucher-card-body">
+                        <div>
+                            <div class="voucher-card-amount">
+                                ₹<span th:text="${#numbers.formatDecimal(v.initialValue, 1, 2)}">100.00</span>
+                            </div>
+                            <div class="voucher-meta-row">
+                                <span>Expires On</span>
+                                <strong th:text="${v.expiryDate}">2026-11-01</strong>
+                            </div>
+                            <div class="voucher-meta-row">
+                                <span>Issued By</span>
+                                <span th:text="${v.createdBy != null ? v.createdBy.name : 'System Admin'}">Admin</span>
+                            </div>
+                            <div class="voucher-meta-row" th:if="${v.redeemedAt != null}">
+                                <span>Redeemed At</span>
+                                <strong style="color: #7c3aed;" th:text="${#temporals.format(v.redeemedAt, 'MMM dd, HH:mm')}">Oct 04, 10:00</strong>
+                            </div>
+                        </div>
+
+                        <div class="voucher-card-actions" th:if="${v.status.name() == 'ASSIGNED'}">
+                            <button type="button" class="btn btn-primary btn-sm" style="flex: 1;"
+                                    th:data-code="${v.code}"
+                                    th:data-amount="${v.initialValue}"
+                                    th:data-expiry="${v.expiryDate}"
+                                    th:data-qr="${voucherQrMap.get(v.code)}"
+                                    onclick="openVoucherQrModal(this.getAttribute('data-code'), this.getAttribute('data-amount'), this.getAttribute('data-expiry'), this.getAttribute('data-qr'))">
+                                Show QR Code
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm"
+                                    th:data-code="${v.code}"
+                                    th:data-amount="${v.initialValue}"
+                                    onclick="openTaxiModalForVoucher(this.getAttribute('data-code'), this.getAttribute('data-amount'))">
+                                Settle Ride
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 3: SEARCH & BOOK TRANSIT
+             ========================================== -->
+        <div id="tab-transit" class="tab-content" th:classappend="${activeTab == 'transit' ? 'active' : ''}">
+            <div class="card-form">
+                <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem;">Search Scheduled Bus &amp; Metro Trips</h2>
+
+                <form th:action="@{/user/dashboard}" method="get">
+                    <input type="hidden" name="tab" value="transit">
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="originInput">Origin Station</label>
+                            <input type="text" id="originInput" name="origin" class="form-control" placeholder="e.g. Campus" th:value="${searchOrigin}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="destInput">Destination Station</label>
+                            <input type="text" id="destInput" name="destination" class="form-control" placeholder="e.g. Tech Park" th:value="${searchDestination}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="dateInput">Date of Travel</label>
+                            <input type="date" id="dateInput" name="travelDate" class="form-control" th:value="${searchTravelDate}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                Find Trips →
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Quick route pills -->
+                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Popular Routes:</span>
+                    <span th:each="r : ${routes}" class="route-pill"
+                          th:data-origin="${r.origin}"
+                          th:data-dest="${r.destination}"
+                          onclick="selectRoute(this.getAttribute('data-origin'), this.getAttribute('data-dest'))">
+                        <span th:text="${r.origin + ' → ' + r.destination}">Campus → Tech Park</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Search Results Table -->
+            <div th:if="${searchResults != null}" class="table-card">
+                <div class="table-header">
+                    <div class="table-title">
+                        Available Trips: <span th:text="${searchOrigin + ' → ' + searchDestination}">Campus → Tech Park</span>
+                    </div>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);" th:text="${searchResults.size() + ' departure(s) found'}">3 found</span>
+                </div>
+
+                <div th:if="${searchResults.isEmpty()}" style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+                    <p style="font-weight: 600;">No trips found matching your search parameters.</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Try choosing tomorrow or another date.</p>
+                </div>
+
+                <div th:if="${!searchResults.isEmpty()}" class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Mode</th>
+                                <th>Departure</th>
+                                <th>Arrival</th>
+                                <th>Seats Available</th>
+                                <th>Fare / Seat</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="t : ${searchResults}">
+                                <td>
+                                    <span class="badge" th:text="${t.mode}">BUS</span>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 700;" th:text="${#temporals.format(t.departureTime, 'HH:mm')}">09:00</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);" th:text="${#temporals.format(t.departureTime, 'MMM dd, yyyy')}">Oct 05, 2026</div>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 700;" th:text="${#temporals.format(t.arrivalTime, 'HH:mm')}">09:45</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);" th:text="${#temporals.format(t.arrivalTime, 'MMM dd, yyyy')}">Oct 05, 2026</div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong th:text="${t.availableSeats}">40</strong> / <span th:text="${t.totalSeats}">40</span>
+                                    </div>
+                                    <div class="capacity-bar-container">
+                                        <div class="capacity-bar"
+                                             th:style="'width: ' + ${(t.availableSeats * 100) / t.totalSeats} + '%;'"
+                                             th:classappend="${t.availableSeats < 5 ? 'low' : ''}"></div>
+                                    </div>
+                                </td>
+                                <td style="font-size: 1.1rem; font-weight: 800; color: var(--primary);">
+                                    ₹<span th:text="${#numbers.formatDecimal(t.fare, 1, 2)}">45.00</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm"
+                                            th:data-trip-id="${t.tripId}"
+                                            th:data-route="${t.origin + ' → ' + t.destination}"
+                                            th:data-departure="${#temporals.format(t.departureTime, 'MMM dd, HH:mm')}"
+                                            th:data-fare="${t.fare}"
+                                            th:data-seats="${t.availableSeats}"
+                                            onclick="openBookingModal(this.getAttribute('data-trip-id'), this.getAttribute('data-route'), this.getAttribute('data-departure'), this.getAttribute('data-fare'), this.getAttribute('data-seats'))">
+                                        Reserve Seat
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 4: MY BOOKINGS & TICKETS
+             ========================================== -->
+        <div id="tab-bookings" class="tab-content" th:classappend="${activeTab == 'bookings' ? 'active' : ''}">
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">Confirmed Transit Reservations &amp; Boarding Tickets</div>
+                </div>
+
+                <div th:if="${bookings.isEmpty()}" style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+                    <p style="font-weight: 600;">You have no transit bookings yet.</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        Use the "Search &amp; Book Transit" tab to plan your next commute.
+                    </p>
+                </div>
+
+                <div th:if="${!bookings.isEmpty()}" class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Booking Ref</th>
+                                <th>Route &amp; Mode</th>
+                                <th>Departure Time</th>
+                                <th>Seats Booked</th>
+                                <th>Payment Method</th>
+                                <th>Total Fare</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="b : ${bookings}">
+                                <td><code style="font-weight: 700; color: var(--primary);" th:text="${b.bookingReference}">BKG-123</code></td>
+                                <td>
+                                    <strong th:text="${b.origin + ' → ' + b.destination}">Campus → Tech Park</strong>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);" th:text="${b.transitMode}">BUS</div>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 600;" th:text="${#temporals.format(b.departureTime, 'MMM dd, yyyy HH:mm')}">Oct 05, 09:00</div>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 700;" th:text="${b.seatCount}">1</span> seat(s)
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                        Seats: <span th:each="t, iter : ${b.tickets}" th:text="${t.seatNumber + (iter.last ? '' : ', ')}">1</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background: var(--neutral-100); color: var(--neutral-700);" th:text="${b.paymentMethod}">WALLET</span>
+                                </td>
+                                <td style="font-weight: 800;">₹<span th:text="${#numbers.formatDecimal(b.totalFare, 1, 2)}">45.00</span></td>
+                                <td>
+                                    <span class="badge" th:classappend="${b.status.name() == 'CONFIRMED' ? 'badge-confirmed' : 'badge-cancelled'}" th:text="${b.status}">CONFIRMED</span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <!-- View Ticket QR button for first ticket -->
+                                        <button th:if="${!b.tickets.isEmpty() && b.status.name() == 'CONFIRMED'}"
+                                                class="btn btn-primary btn-sm"
+                                                th:data-ticket="${b.tickets.get(0).ticketNumber}"
+                                                th:data-seat="${b.tickets.get(0).seatNumber}"
+                                                th:data-qr="${b.tickets.get(0).qrCodeData}"
+                                                onclick="openTicketQrModal(this.getAttribute('data-ticket'), this.getAttribute('data-seat'), this.getAttribute('data-qr'))">
+                                            Ticket QR
+                                        </button>
+
+                                        <!-- Cancel Booking Form -->
+                                        <form th:if="${b.status.name() == 'CONFIRMED'}" th:action="@{'/user/cancel-booking/' + ${b.id}}" method="post" onsubmit="return confirm('Are you sure you want to cancel this booking? 100% of the fare will be refunded to your wallet.');">
+                                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                            <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 5: TRANSACTION LEDGER
+             ========================================== -->
+        <div id="tab-transactions" class="tab-content" th:classappend="${activeTab == 'transactions' ? 'active' : ''}">
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title">Immutable Financial Audit Ledger</div>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Append-only record of all balance movements</span>
+                </div>
+
+                <div th:if="${transactions.isEmpty()}" style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+                    No ledger transactions recorded yet.
+                </div>
+
+                <div th:if="${!transactions.isEmpty()}" class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>Timestamp</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                                <th>Voucher Reference</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="tx : ${transactions}">
+                                <td><code>#TX-<span th:text="${tx.id}">101</span></code></td>
+                                <td th:text="${#temporals.format(tx.createdAt, 'MMM dd, yyyy HH:mm:ss')}">Oct 04, 2026 10:15:00</td>
+                                <td>
+                                    <span class="badge" th:classappend="${tx.type.name() == 'CREDIT' ? 'badge-confirmed' : 'badge-cancelled'}" th:text="${tx.type}">CREDIT</span>
+                                </td>
+                                <td>
+                                    <strong th:style="${tx.type.name() == 'CREDIT' ? 'color: var(--success); font-size: 1.05rem;' : 'color: var(--danger); font-size: 1.05rem;'}">
+                                        <span th:text="${tx.type.name() == 'CREDIT' ? '+' : '-'}">+</span>₹<span th:text="${#numbers.formatDecimal(tx.amount, 1, 2)}">100.00</span>
+                                    </strong>
+                                </td>
+                                <td th:text="${tx.description}">Allowance credit</td>
+                                <td>
+                                    <span th:if="${tx.voucher != null}"><code th:text="${tx.voucher.code}">VCH-123</code></span>
+                                    <span th:if="${tx.voucher == null}" style="color: var(--text-muted);">-</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="credits">Made by <strong>Anannya Salvi</strong> • 2026</div>
+            <div>Mobility Wallet | Enterprise Prepaid Transit Allowance &amp; Ticketing Platform</div>
+        </div>
+    </footer>
+
+    <!-- ==========================================
+         MODALS
+         ========================================== -->
+
+    <!-- Modal 1: Voucher QR Code Modal -->
+    <div id="voucherQrModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">Voucher QR Code</div>
+                <button type="button" class="modal-close" onclick="closeModal('voucherQrModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <div class="qr-display-container">
+                    <img id="voucherQrImg" class="qr-display-image" src="" alt="Voucher QR Code">
+                </div>
+                <div style="font-family: monospace; font-size: 1.25rem; font-weight: 800; color: var(--primary); margin-bottom: 0.5rem;" id="modalVoucherCode">
+                    VCH-CODE
+                </div>
+                <div style="font-size: 1.75rem; font-weight: 800; color: var(--neutral-900); margin-bottom: 0.5rem;">
+                    ₹<span id="modalVoucherAmount">0.00</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                    Present this QR code to the taxi driver or transit operator. Valid until <strong id="modalVoucherExpiry">2026-12-31</strong>.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('voucherQrModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Ticket QR Code Modal -->
+    <div id="ticketQrModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">Boarding Pass Verification QR</div>
+                <button type="button" class="modal-close" onclick="closeModal('ticketQrModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <div class="qr-display-container">
+                    <img id="ticketQrImg" class="qr-display-image" src="" alt="Ticket QR Code">
+                </div>
+                <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem;">
+                    Ticket #<span id="modalTicketNumber">TCK-123</span>
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 0.5rem;">
+                    Seat #<span id="modalSeatNumber">1</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                    Display this boarding QR to the conductor when boarding the transit vehicle.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('ticketQrModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Booking Checkout Modal -->
+    <div id="bookingModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">Confirm Seat Reservation</div>
+                <button type="button" class="modal-close" onclick="closeModal('bookingModal')">&times;</button>
+            </div>
+            <form th:action="@{/user/book}" method="post">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" id="bookingTripId" name="tripId" value="">
+
+                <div class="modal-body">
+                    <div style="padding: 1rem; background: var(--neutral-50); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 1.25rem;">
+                        <div style="font-weight: 700; font-size: 1.1rem;" id="bookingRouteName">Campus → Tech Park</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);" id="bookingDepartureTime">Oct 05, 09:00</div>
+                        <div style="font-size: 0.85rem; color: var(--primary); font-weight: 700; margin-top: 0.25rem;">
+                            Fare: ₹<span id="bookingFare">45.00</span> per seat (<span id="bookingAvailableSeats">40</span> seats available)
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="seatsSelect">Seats to Book</label>
+                        <select id="seatsSelect" name="seatsCount" class="form-select" onchange="updateBookingTotal()">
+                            <option value="1" selected>1 Seat</option>
+                            <option value="2">2 Seats</option>
+                            <option value="3">3 Seats</option>
+                            <option value="4">4 Seats</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Payment Method</label>
+                        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; cursor: pointer;">
+                                <input type="radio" name="paymentMethod" value="WALLET" checked onchange="togglePaymentSource('WALLET')">
+                                Wallet (₹<span th:text="${#numbers.formatDecimal(walletBalance, 1, 2)}">0.00</span>)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; cursor: pointer;">
+                                <input type="radio" name="paymentMethod" value="VOUCHER" onchange="togglePaymentSource('VOUCHER')">
+                                Voucher / Split Payment
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="voucherSelectGroup" class="form-group" style="display: none;">
+                        <label class="form-label" for="voucherSelect">Select Active Voucher</label>
+                        <select id="voucherSelect" name="voucherCode" class="form-select">
+                            <option value="" disabled selected>-- Choose Voucher --</option>
+                            <option th:each="v : ${activeVouchers}" th:value="${v.code}" th:text="${v.code + ' (₹' + v.initialValue + ')'}">
+                                VCH-100 (₹100.00)
+                            </option>
+                        </select>
+                        <small style="color: var(--text-muted); font-size: 0.75rem;">
+                            If voucher value is less than fare, the remaining balance is deducted from your wallet automatically.
+                        </small>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--primary-light); border-radius: var(--radius-sm); margin-top: 1.25rem;">
+                        <span style="font-weight: 700; color: var(--primary);">Total Due:</span>
+                        <span style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">
+                            ₹<span id="bookingTotalDue">45.00</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('bookingModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm & Pay</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Taxi Ride Redemption Simulator -->
+    <div id="taxiRedeemModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">Taxi Ride Voucher Settlement</div>
+                <button type="button" class="modal-close" onclick="closeModal('taxiRedeemModal')">&times;</button>
+            </div>
+            <form th:action="@{/user/redeem-taxi}" method="post">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div class="modal-body">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        Simulates the taxi driver scanning your voucher QR code to atomically settle the ride meter fare.
+                    </p>
+
+                    <div class="form-group">
+                        <label class="form-label" for="taxiVoucherSelect">Select Voucher to Redeem</label>
+                        <select id="taxiVoucherSelect" name="voucherCode" class="form-select" required>
+                            <option value="" disabled selected>-- Choose Assigned Voucher --</option>
+                            <option th:each="v : ${activeVouchers}" th:value="${v.code}" th:text="${v.code + ' (Max ₹' + v.initialValue + ')'}">
+                                VCH-100 (Max ₹100.00)
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="driverName">Driver Name</label>
+                        <input type="text" id="driverName" name="driverName" class="form-control" value="Ramesh Kumar" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="vehicleNumber">Vehicle Registration #</label>
+                        <input type="text" id="vehicleNumber" name="vehicleNumber" class="form-control" value="MH-02-CB-1234" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="pickupLoc">Pickup Location</label>
+                        <input type="text" id="pickupLoc" name="pickupLocation" class="form-control" value="Main Campus Gate 1" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="dropLoc">Drop Location</label>
+                        <input type="text" id="dropLoc" name="dropLocation" class="form-control" value="Tech Park Tower B" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="meterFare">Meter Fare (₹)</label>
+                        <input type="number" id="meterFare" name="fare" step="0.50" min="1" max="1000" class="form-control" value="50.00" required>
+                        <small style="color: var(--text-muted); font-size: 0.75rem;">Meter fare cannot exceed the voucher initial value.</small>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('taxiRedeemModal')">Cancel</button>
+                    <button type="submit" class="btn btn-success">Confirm Ride Settlement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript for Tabs, Modals and Forms -->
+    <script>
+        let currentPerSeatFare = 45.00;
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+            if (targetBtn) targetBtn.classList.add('active');
+
+            const targetContent = document.getElementById('tab-' + tabId);
+            if (targetContent) targetContent.classList.add('active');
+
+            // Update URL without reload
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tabId);
+            window.history.replaceState({}, '', url);
+        }
+
+        function openModal(modalId) {
+            const m = document.getElementById(modalId);
+            if (m) m.classList.add('open');
+        }
+
+        function closeModal(modalId) {
+            const m = document.getElementById(modalId);
+            if (m) m.classList.remove('open');
+        }
+
+        function openVoucherQrModal(code, amount, expiry, qrUri) {
+            document.getElementById('modalVoucherCode').innerText = code;
+            document.getElementById('modalVoucherAmount').innerText = parseFloat(amount).toFixed(2);
+            document.getElementById('modalVoucherExpiry').innerText = expiry;
+            document.getElementById('voucherQrImg').src = qrUri || '';
+            openModal('voucherQrModal');
+        }
+
+        function openTicketQrModal(ticketNumber, seatNumber, qrUri) {
+            document.getElementById('modalTicketNumber').innerText = ticketNumber;
+            document.getElementById('modalSeatNumber').innerText = seatNumber;
+            document.getElementById('ticketQrImg').src = qrUri || '';
+            openModal('ticketQrModal');
+        }
+
+        function openBookingModal(tripId, routeName, departureTime, fare, availableSeats) {
+            document.getElementById('bookingTripId').value = tripId;
+            document.getElementById('bookingRouteName').innerText = routeName;
+            document.getElementById('bookingDepartureTime').innerText = departureTime;
+            document.getElementById('bookingFare').innerText = parseFloat(fare).toFixed(2);
+            document.getElementById('bookingAvailableSeats').innerText = availableSeats;
+            currentPerSeatFare = parseFloat(fare);
+            updateBookingTotal();
+            openModal('bookingModal');
+        }
+
+        function updateBookingTotal() {
+            const seats = parseInt(document.getElementById('seatsSelect').value) || 1;
+            const total = seats * currentPerSeatFare;
+            document.getElementById('bookingTotalDue').innerText = total.toFixed(2);
+        }
+
+        function togglePaymentSource(mode) {
+            const group = document.getElementById('voucherSelectGroup');
+            if (mode === 'VOUCHER') {
+                group.style.display = 'block';
+                document.getElementById('voucherSelect').required = true;
+            } else {
+                group.style.display = 'none';
+                document.getElementById('voucherSelect').required = false;
+            }
+        }
+
+        function openTaxiModalForVoucher(code, amount) {
+            const select = document.getElementById('taxiVoucherSelect');
+            if (select) select.value = code;
+            const fareInput = document.getElementById('meterFare');
+            if (fareInput) fareInput.value = parseFloat(amount).toFixed(2);
+            openModal('taxiRedeemModal');
+        }
+
+        function selectRoute(origin, dest) {
+            document.getElementById('originInput').value = origin;
+            document.getElementById('destInput').value = dest;
+        }
+
+        // Close modal on click outside box
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('open');
+            }
+        }
+    </script>
+</body>
+</html>

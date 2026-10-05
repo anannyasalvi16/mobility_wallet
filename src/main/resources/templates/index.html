@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0F172A">
+    <title>Mobility Wallet | Enterprise Transit Allowance & Ticketing Platform</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="alternate icon" type="image/png" th:href="@{/favicon.png}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <style>
+        .hero {
+            padding: 4.5rem 1.5rem;
+            text-align: center;
+            background: var(--color-bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            background: var(--neutral-100);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            font-size: 0.775rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1.25rem;
+        }
+        .hero-title {
+            font-size: 2.75rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--neutral-900);
+            max-width: 820px;
+            margin: 0 auto 1.25rem;
+            line-height: 1.15;
+        }
+        .hero-title span {
+            color: var(--primary);
+            border-bottom: 3px solid var(--accent);
+        }
+        .hero-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 660px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+        .hero-cta {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin: 3.5rem 0;
+        }
+        .feature-card {
+            background: var(--color-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: border-color 0.15s ease;
+        }
+        .feature-card:hover {
+            border-color: var(--border-hover);
+        }
+        .feature-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            color: var(--neutral-900);
+        }
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        .tech-pill {
+            background: var(--neutral-100);
+            padding: 0.2rem 0.55rem;
+            border-radius: var(--radius-xs);
+            font-size: 0.725rem;
+            font-weight: 600;
+            color: var(--neutral-700);
+            border: 1px solid var(--border);
+            display: inline-block;
+            margin: 0.2rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <a th:href="@{/}" class="brand-logo">
+                <img th:src="@{/images/logo-dark.svg}" alt="Mobility Wallet" height="32" width="32" class="brand-logo-img">
+                <div class="brand-logo-text">Mobility Wallet</div>
+            </a>
+            <div class="nav-actions">
+                <a th:href="@{/login}" class="btn btn-secondary btn-sm">Sign In</a>
+                <a th:href="@{/register}" class="btn btn-primary btn-sm">Register</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-badge">
+                High-Concurrency Closed-Loop Transit Platform
+            </div>
+            <h1 class="hero-title">
+                Prepaid Transit Allowances & <span>Zero-Leakage</span> Ticketing
+            </h1>
+            <p class="hero-desc">
+                Dedicated digital vouchers and automated transit bookings for enterprises and universities. Engineered with optimistic locking, atomic QR redemptions, and an immutable audit ledger.
+            </p>
+            <div class="hero-cta">
+                <a th:href="@{/register}" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-size: 0.95rem;">
+                    Get Started
+                </a>
+                <a th:href="@{/login}" class="btn btn-secondary" style="padding: 0.75rem 1.5rem; font-size: 0.95rem;">
+                    Sign In to Portal
+                </a>
+            </div>
+            <div style="margin-top: 2rem;">
+                <span class="tech-pill">Java 17</span>
+                <span class="tech-pill">Spring Boot 3.2.4</span>
+                <span class="tech-pill">MySQL 8.0</span>
+                <span class="tech-pill">Optimistic Locking (@Version)</span>
+                <span class="tech-pill">ZXing QR Engine</span>
+                <span class="tech-pill">Thymeleaf</span>
+            </div>
+        </section>
+
+        <div class="container">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Prepaid Allowance Wallets</h3>
+                    <p>Digital wallets auto-provisioned upon registration. Strict financial precision via <code>BigDecimal</code> preventing floating-point rounding errors.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Vouchers & QR Redemptions</h3>
+                    <p>Issue subsidized single or bulk vouchers with validity windows. Commuters display scannable Base64 QR payloads for instant taxi ride settlements.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Zero Overbooking Defenses</h3>
+                    <p>Hibernate <code>@Version</code> concurrency controls with exponential backoff retries guarantee zero overbooked seats and zero duplicate redemptions.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Immutable Audit Ledger</h3>
+                    <p>Strictly append-only financial accounting. Every wallet credit, booking debit, and cancellation refund logs a permanent audit entry.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Cancellation & Auto-Refunds</h3>
+                    <p>Commuters can cancel scheduled transit bookings before departure, instantly replenishing trip seat capacity and refunding 100% of the fare.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Operational Analytics</h3>
+                    <p>Real-time visual monitoring with Chart.js: voucher conversion funnels, daily spend velocity, route revenues, and seat load factors.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="credits">Made by <strong>Anannya Salvi</strong> • 2026</div>
+            <div>Mobility Wallet | Enterprise Prepaid Transit Allowance &amp; Ticketing Platform</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Spring Boot 3 • MySQL 8 • Thymeleaf</div>
+        </div>
+    </footer>
+</body>
+</html>

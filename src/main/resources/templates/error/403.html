@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0F172A">
+    <title>403 Access Denied | Mobility Wallet</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="alternate icon" type="image/png" th:href="@{/favicon.png}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="auth-wrapper">
+    <div class="auth-card" style="text-align: center;">
+        <div style="font-size: 2.5rem; font-weight: 800; color: var(--danger); line-height: 1; margin-bottom: 0.75rem;">
+            403
+        </div>
+        <h1 style="font-size: 1.35rem; font-weight: 700; color: var(--neutral-900); margin-bottom: 0.5rem;">
+            Access Denied
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem; line-height: 1.5;">
+            You do not have the required permissions to access this endpoint.
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; background: var(--neutral-100); padding: 0.75rem; border-radius: var(--radius-xs);">
+            Administrators and Commuters have segregated workspaces in the Mobility Wallet platform.
+        </p>
+
+        <a th:href="@{/dashboard}" class="btn btn-primary" style="width: 100%; margin-bottom: 0.75rem; text-decoration: none;">
+            Return to Dashboard
+        </a>
+
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button type="submit" class="btn btn-secondary" style="width: 100%;">
+                Sign Out
+            </button>
+        </form>
+    </div>
+
+    <footer style="margin-top: 2rem; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+        <div>Made by <strong style="color: var(--neutral-800);">Anannya Salvi</strong> • 2026</div>
+        <div>Mobility Wallet Platform</div>
+    </footer>
+</body>
+</html>

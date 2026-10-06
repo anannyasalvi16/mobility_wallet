@@ -113,13 +113,14 @@ public class DataInitializer implements CommandLineRunner {
                 return;
             }
 
-            if ("admin123".equals(adminPassword) || "admin@mobility.com".equalsIgnoreCase(adminEmail.trim())) {
-                log.warn("Dev default credentials (admin@mobility.com / admin123) are rejected in production! Provide unique ADMIN_EMAIL and ADMIN_PASSWORD.");
+            if ("admin123".equals(adminPassword) || "user123".equals(adminPassword)) {
+                log.warn("Dev default password (admin123/user123) is rejected in production! Provide a unique ADMIN_PASSWORD.");
                 return;
             }
 
             String sanitizedEmail = adminEmail.toLowerCase().trim();
-            if (!userRepository.existsByEmail(sanitizedEmail)) {
+            java.util.Optional<User> existingOpt = userRepository.findByEmail(sanitizedEmail);
+            if (existingOpt.isEmpty()) {
                 log.info("Seeding production administrator: {}", sanitizedEmail);
                 User admin = new User();
                 admin.setName(adminName != null && !adminName.isBlank() ? adminName : "System Administrator");
@@ -134,7 +135,12 @@ public class DataInitializer implements CommandLineRunner {
                 userRepository.save(admin);
                 log.info("Production administrator seeded successfully.");
             } else {
-                log.info("Production administrator {} already exists. Skipping creation.", sanitizedEmail);
+                User existing = existingOpt.get();
+                existing.setPassword(passwordEncoder.encode(adminPassword));
+                existing.setRole(Role.ROLE_ADMIN);
+                existing.setEnabled(true);
+                userRepository.save(existing);
+                log.info("Production administrator {} exists; password updated from environment.", sanitizedEmail);
             }
 
             // In prod: Seed ONLY an admin. Never create demo users, test vouchers, or mock routes.

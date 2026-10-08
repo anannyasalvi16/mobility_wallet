@@ -157,6 +157,7 @@ public class DataInitializer implements CommandLineRunner {
         // 1. Seed example.com demo accounts for quick-fill demo login buttons
         seedUserIfNotPresent("Demo Administrator", "admin@example.com", "admin123", "9876500000", Role.ROLE_ADMIN, BigDecimal.ZERO);
         seedUserIfNotPresent("Demo Commuter", "user@example.com", "user123", "9876511111", Role.ROLE_USER, userInitialBalance);
+        seedUserIfNotPresent("Demo User", "example@email.com", "user123", "9876511112", Role.ROLE_USER, userInitialBalance);
 
         // 2. In dev profile, also ensure mobility.com accounts for backward compatibility
         if (!isProd) {

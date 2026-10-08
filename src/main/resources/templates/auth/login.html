@@ -29,20 +29,22 @@
         </div>
 
         <!-- Login form with CSRF -->
-        <form id="loginForm" th:action="@{/login}" method="post">
+        <form id="loginForm" th:action="@{/login}" method="post" autocomplete="off">
             <input type="hidden" th:if="${_csrf != null}"
                    th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
             <div class="form-group">
                 <label class="form-label" for="username">Email Address</label>
                 <input type="email" id="username" name="username"
-                       class="form-control" placeholder="user@example.com" required autofocus autocomplete="username">
+                       class="form-control" placeholder="example@email.com"
+                       value="" autocomplete="off" required autofocus>
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="form-label" for="password">Password</label>
                 <input type="password" id="password" name="password"
-                       class="form-control" placeholder="Enter password" required autocomplete="current-password">
+                       class="form-control" placeholder="Enter password"
+                       value="" autocomplete="new-password" required>
             </div>
 
             <button type="submit" id="btn-submit" class="btn btn-primary" style="width: 100%; padding: 0.65rem;">Sign In</button>
@@ -81,7 +83,10 @@
     </footer>
 
     <script>
+        var userClickedDemo = false;
+
         function fillCreds(email, password) {
+            userClickedDemo = true;
             var emailField = document.getElementById('username');
             var passField  = document.getElementById('password');
             if (emailField) {
@@ -91,6 +96,22 @@
                 passField.value = password;
             }
         }
+
+        // Keep password and email blank on page load, preventing browser autofill of saved passwords
+        function clearAutofill() {
+            if (!userClickedDemo) {
+                var passField = document.getElementById('password');
+                if (passField) {
+                    passField.value = '';
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', clearAutofill);
+        window.addEventListener('load', function() {
+            setTimeout(clearAutofill, 50);
+            setTimeout(clearAutofill, 200);
+        });
     </script>
 </body>
 </html>

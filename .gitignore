@@ -51,4 +51,7 @@ secrets/
 ### Log files ###
 *.log
 
+### Local Reference Documents ###
+explanation*.html
+
 

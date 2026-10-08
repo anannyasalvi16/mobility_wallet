@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * Seeds initial accounts and master data on startup.
@@ -122,7 +123,7 @@ public class DataInitializer implements CommandLineRunner {
             }
 
             String sanitizedEmail = adminEmail.toLowerCase().trim();
-            java.util.Optional<User> existingOpt = userRepository.findByEmail(sanitizedEmail);
+            Optional<User> existingOpt = userRepository.findByEmail(sanitizedEmail);
             if (existingOpt.isEmpty()) {
                 log.info("Seeding production administrator: {}", sanitizedEmail);
                 User admin = new User();
@@ -175,9 +176,10 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(admin);
         }
 
-        // 2. Seed Commuter User (ROLE_USER, with wallet) if missing
-        if (!userRepository.existsByEmail(userEmail.toLowerCase().trim())) {
-            log.info("Seeding dev user: {}", userEmail);
+        // 2. Seed Commuter User (ROLE_USER, with wallet)
+        Optional<User> existingUserOpt = userRepository.findByEmail(userEmail.toLowerCase().trim());
+        if (existingUserOpt.isEmpty()) {
+            log.info("Seeding demo user: {}", userEmail);
             User user = new User();
             user.setName(userName);
             user.setEmail(userEmail.toLowerCase().trim());
@@ -196,9 +198,20 @@ public class DataInitializer implements CommandLineRunner {
                     null,
                     TransactionType.CREDIT,
                     userInitialBalance.setScale(2),
-                    "Dev welcome mobility allowance credited to wallet"
+                    "Welcome mobility allowance credited to wallet"
             );
             transactionRepository.save(creditTx);
+        } else {
+            User existingUser = existingUserOpt.get();
+            existingUser.setPassword(passwordEncoder.encode(userPassword));
+            existingUser.setRole(Role.ROLE_USER);
+            existingUser.setEnabled(true);
+            if (existingUser.getWallet() == null) {
+                Wallet userWallet = new Wallet(existingUser, userInitialBalance.setScale(2));
+                existingUser.setWallet(userWallet);
+            }
+            userRepository.save(existingUser);
+            log.info("Demo user {} exists; credentials and wallet ensured.", userEmail);
         }
 
         // 3. Seed Routes: "Campus to Tech Park" and "Metro Station to Airport"

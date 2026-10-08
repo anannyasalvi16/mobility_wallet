@@ -66,6 +66,9 @@ public class DataInitializer implements CommandLineRunner {
     @Value("${ADMIN_PHONE:${mobility.seed.admin.phone:9876500000}}")
     private String adminPhone;
 
+    @Value("${SEED_DEMO_DATA:true}")
+    private boolean seedDemoData;
+
     // Dev-only seed credentials loaded from application-dev.properties
     @Value("${mobility.seed.user.name:John Doe}")
     private String userName;
@@ -143,8 +146,11 @@ public class DataInitializer implements CommandLineRunner {
                 log.info("Production administrator {} exists; password updated from environment.", sanitizedEmail);
             }
 
-            // In prod: Seed ONLY an admin. Never create demo users, test vouchers, or mock routes.
-            return;
+            if (!seedDemoData) {
+                log.info("Production demo seeding disabled (SEED_DEMO_DATA=false).");
+                return;
+            }
+            log.info("Production demo seeding enabled (SEED_DEMO_DATA=true). Seeding commuter demo, routes, trips, and vouchers...");
         }
 
         // DEV / TEST Profile Seeding

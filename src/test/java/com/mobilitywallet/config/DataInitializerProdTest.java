@@ -31,7 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         "ADMIN_EMAIL=customadmin@prod.com",
         "ADMIN_PASSWORD=ProductionSecretPass999!",
         "ADMIN_NAME=Enterprise Ops Admin",
-        "ADMIN_PHONE=9123456789"
+        "ADMIN_PHONE=9123456789",
+        "SEED_DEMO_DATA=false"
 })
 class DataInitializerProdTest {
 

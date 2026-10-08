@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -28,30 +28,6 @@
             Account created successfully. Please sign in below.
         </div>
 
-        <!-- One-click demo buttons -->
-        <div style="margin-bottom: 1.25rem; padding: 1rem; background: var(--neutral-50); border: 1px solid var(--border); border-radius: var(--radius-xs);">
-            <div style="font-size: 0.725rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                One-Click Demo Login
-            </div>
-            <div style="display: flex; gap: 0.5rem;">
-                <button type="button" id="btn-commuter-demo"
-                        class="btn btn-secondary btn-sm" style="flex: 1;"
-                        onclick="demoLogin('user@mobility.com', 'user123')">
-                    Commuter Demo
-                </button>
-                <button type="button" id="btn-admin-demo"
-                        class="btn btn-secondary btn-sm" style="flex: 1;"
-                        th:attr="data-email=${adminEmail}, data-pass=${adminPass}"
-                        onclick="demoLogin(this.dataset.email, this.dataset.pass)">
-                    Admin Demo
-                </button>
-            </div>
-            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">
-                Commuter: user@mobility.com / user123 &nbsp;|&nbsp;
-                Admin: <span th:text="${adminEmail}">admin@mobility.com</span>
-            </div>
-        </div>
-
         <!-- Login form with CSRF -->
         <form id="loginForm" th:action="@{/login}" method="post">
             <input type="hidden" th:if="${_csrf != null}"
@@ -60,17 +36,39 @@
             <div class="form-group">
                 <label class="form-label" for="username">Email Address</label>
                 <input type="email" id="username" name="username"
-                       class="form-control" placeholder="name@company.com" required autofocus>
+                       class="form-control" placeholder="user@example.com" required autofocus autocomplete="username">
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="form-label" for="password">Password</label>
                 <input type="password" id="password" name="password"
-                       class="form-control" placeholder="Enter password" required>
+                       class="form-control" placeholder="Enter password" required autocomplete="current-password">
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.65rem;">Sign In</button>
+            <button type="submit" id="btn-submit" class="btn btn-primary" style="width: 100%; padding: 0.65rem;">Sign In</button>
         </form>
+
+        <!-- Quick Fill Demo Accounts -->
+        <div style="margin-top: 1.5rem; padding: 1rem; background: var(--neutral-50); border: 1px solid var(--border); border-radius: var(--radius-xs);">
+            <div style="font-size: 0.725rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                Quick Fill Demo Accounts
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="button" id="btn-commuter-demo"
+                        class="btn btn-secondary btn-sm" style="flex: 1;"
+                        onclick="fillCreds('user@example.com', 'user123')">
+                    Commuter Demo
+                </button>
+                <button type="button" id="btn-admin-demo"
+                        class="btn btn-secondary btn-sm" style="flex: 1;"
+                        onclick="fillCreds('admin@example.com', 'admin123')">
+                    Admin Demo
+                </button>
+            </div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">
+                Commuter: user@example.com / user123 &nbsp;|&nbsp; Admin: admin@example.com / admin123
+            </div>
+        </div>
 
         <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
             Don't have an account? <a th:href="@{/register}" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Register</a>
@@ -83,14 +81,15 @@
     </footer>
 
     <script>
-        function demoLogin(email, password) {
+        function fillCreds(email, password) {
             var emailField = document.getElementById('username');
             var passField  = document.getElementById('password');
-            emailField.removeAttribute('required');
-            passField.removeAttribute('required');
-            emailField.value = email;
-            passField.value  = password;
-            document.getElementById('loginForm').submit();
+            if (emailField) {
+                emailField.value = email;
+            }
+            if (passField) {
+                passField.value = password;
+            }
         }
     </script>
 </body>

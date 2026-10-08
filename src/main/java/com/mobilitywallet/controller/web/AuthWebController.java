@@ -4,7 +4,6 @@ import com.mobilitywallet.dto.request.RegistrationDto;
 import com.mobilitywallet.exception.DuplicateEmailException;
 import com.mobilitywallet.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -19,12 +18,6 @@ public class AuthWebController {
 
     private final UserService userService;
 
-    @Value("${ADMIN_EMAIL:admin@mobility.com}")
-    private String adminEmail;
-
-    @Value("${ADMIN_PASSWORD:admin123}")
-    private String adminPassword;
-
     public AuthWebController(UserService userService) {
         this.userService = userService;
     }
@@ -38,14 +31,10 @@ public class AuthWebController {
     }
 
     @GetMapping("/login")
-    public String login(Authentication authentication, Model model) {
+    public String login(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated()) {
             return "redirect:/dashboard";
         }
-        // Expose admin demo credentials so the template can render them
-        // into the Admin Demo button without fragile SpEL expressions.
-        model.addAttribute("adminEmail", adminEmail);
-        model.addAttribute("adminPass",  adminPassword);
         return "auth/login";
     }
 

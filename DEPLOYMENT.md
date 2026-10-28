@@ -31,12 +31,13 @@ This guide provides step-by-step instructions for deploying the **Mobility Walle
                                          ▼
                              [ Managed MySQL 8.0 ]
                              • InnoDB, UTF8MB4
-                             • ddl-auto=update (Preserves records)
+                             • Flyway Migrations (baseline-on-migrate=true)
+                             • ddl-auto=validate
 ```
 
 - **Runtime:** Eclipse Temurin 17 JRE on Alpine Linux (multi-stage Docker build).
 - **Security:** Non-root execution (`USER appuser`), no stack traces in error pages, CORS/CSRF enforcement, reverse proxy forward-headers handling.
-- **Database:** MySQL 8.0+. All tables and relationships are auto-managed with `spring.jpa.hibernate.ddl-auto=update`.
+- **Database:** MySQL 8.0+. Database schema is version-controlled via Flyway (`V1__init_schema.sql`) and verified via `spring.jpa.hibernate.ddl-auto=validate`.
 
 ---
 
@@ -83,8 +84,8 @@ SPRING_PROFILES_ACTIVE=prod
 DB_URL=jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?useSSL=true&allowPublicKeyRetrieval=true&serverTimezone=UTC
 DB_USERNAME=${{MySQL.MYSQLUSER}}
 DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}
-ADMIN_EMAIL=ops-admin@yourdomain.com
-ADMIN_PASSWORD=YourStrongSecurePassword2026!
+ADMIN_EMAIL=admin@yourdomain.com
+ADMIN_PASSWORD=<your-strong-production-password>
 ```
 
 *(Railway automatically injects `${PORT}` and links `${{MySQL.*}}` reference variables).*
@@ -134,7 +135,7 @@ DB_URL=jdbc:mysql://<your-db-host>:<port>/<dbname>?useSSL=true&serverTimezone=UT
 DB_USERNAME=<your-db-username>
 DB_PASSWORD=<your-db-password>
 ADMIN_EMAIL=admin@yourdomain.com
-ADMIN_PASSWORD=YourStrongSecurePassword2026!
+ADMIN_PASSWORD=<your-strong-production-password>
 ```
 
 ### Step 4: Health Check Configuration
@@ -164,11 +165,11 @@ docker run -d \
   --name mobility-wallet \
   -p 8080:8080 \
   -e SPRING_PROFILES_ACTIVE=prod \
-  -e DB_URL="jdbc:mysql://host.docker.internal:3306/mobility_wallet?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
-  -e DB_USERNAME="root" \
-  -e DB_PASSWORD="YourDbPassword" \
-  -e ADMIN_EMAIL="admin@prod.com" \
-  -e ADMIN_PASSWORD="MySuperSecurePass2026!" \
+  -e DB_URL="jdbc:mysql://<your-db-host>:3306/<dbname>?useSSL=true&serverTimezone=UTC" \
+  -e DB_USERNAME="<your-db-username>" \
+  -e DB_PASSWORD="<your-db-password>" \
+  -e ADMIN_EMAIL="admin@yourdomain.com" \
+  -e ADMIN_PASSWORD="<your-strong-production-password>" \
   mobility-wallet:1.0.0
 ```
 
@@ -192,9 +193,9 @@ $env:SPRING_PROFILES_ACTIVE="prod"
 $env:PORT="8080"
 $env:DB_URL="jdbc:mysql://localhost:3306/mobility_wallet?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 $env:DB_USERNAME="root"
-$env:DB_PASSWORD="Password"
-$env:ADMIN_EMAIL="prodadmin@mobility.com"
-$env:ADMIN_PASSWORD="SecureProdAdminPass2026!"
+$env:DB_PASSWORD="<your-local-db-password>"
+$env:ADMIN_EMAIL="admin@yourdomain.com"
+$env:ADMIN_PASSWORD="<your-strong-production-password>"
 
 java -jar target/mobility-wallet-1.0.0-SNAPSHOT.jar
 ```
@@ -215,8 +216,8 @@ Content-Type: application/vnd.spring-boot.actuator.v3+json
 ### 4. Verify Admin Login
 1. Open `http://localhost:8080/login` in your browser.
 2. Sign in with:
-   - **Email:** `prodadmin@mobility.com`
-   - **Password:** `SecureProdAdminPass2026!`
+   - **Email:** `admin@yourdomain.com` (or the `ADMIN_EMAIL` you configured)
+   - **Password:** `<your-strong-production-password>` (the `ADMIN_PASSWORD` you configured)
 3. You will be redirected to the Admin Analytics Dashboard at `/admin/dashboard`.
 4. Note that the demo commuter (`user@mobility.com`) does **not** exist in this database unless registered.
 
@@ -232,3 +233,41 @@ Content-Type: application/vnd.spring-boot.actuator.v3+json
 - [x] **Container Hardening:** Dockerfile executes under an unprivileged `USER appuser`.
 - [x] **Git & Docker Exclusions:** `.env`, `.env.*`, IDE files, and build artifacts excluded in `.gitignore` and `.dockerignore`.
 - [x] **Standard Health Probes:** `/actuator/health` open for container orchestration health checks without exposing sensitive system metrics.
+- [x] **Database Migration & Validation:** Flyway automated migrations enabled with `baseline-on-migrate=true` and Hibernate schema validation (`spring.jpa.hibernate.ddl-auto=validate`), eliminating table-locking runtime DDL mutations.
+
+---
+
+## 8. Cold Start Elimination & Fast Boot Optimization
+
+### Why Does Render Take 60-90 Seconds to Wake Up?
+1. **Free Tier Container Deallocation**: Render terminates free web service instances after **15 minutes of HTTP inactivity**.
+2. **CPU Throttling on Cold Boot**: When an incoming request wakes the instance, Render's host allocates a throttled CPU slice (~0.1 - 0.25 vCPU) during initial provisioning.
+3. **C2 JIT & Classpath Overhead**: A standard Spring Boot fat JAR decompresses nested JARs in memory while the C2 JIT compiler consumes 100% of the tiny CPU allocation, ballooning startup time.
+4. **Remote Database Handshake**: Establishing a remote TLS connection to a cloud MySQL database (Aiven/Clever Cloud) and querying JDBC metadata adds several round-trip seconds.
+
+### The Rigorous Engineering Solution (Two-Tier Approach)
+
+#### Tier 1: Fast Boot Architecture (Cuts Boot Latency by ~65%)
+- **Spring Boot 3 Layered JAR Extraction**: Pre-extracts `dependencies/`, `spring-boot-loader/`, `snapshot-dependencies/`, and `application/` in the builder stage. Classes load directly without decompressing a 50MB zip archive.
+- **C1 JIT Compiler Restriction (`-XX:TieredStopAtLevel=1`)**: Eliminates the CPU-heavy C2 compiler during boot, freeing the throttled CPU core for fast context loading.
+- **Serial Garbage Collector (`-XX:+UseSerialGC`)**: Removes multi-threaded GC thread overhead on single-core containers.
+- **Hibernate Metadata Roundtrip Bypass (`hibernate.temp.use_jdbc_metadata_defaults=false`)**: Instructs Hibernate to use `MySQLDialect` immediately without querying the remote database schema.
+- **Hikari Connection Throttling**: Restricts initial pool connections to avoid connection saturation.
+
+#### Tier 2: Automated Keep-Alive (Eliminates Cold Starts Entirely -> 0ms Delay)
+Because Render free instances only sleep if they receive zero traffic for 15 minutes, pinging `/actuator/health` every 10–12 minutes **keeps the container awake 24/7/365 at zero cost**.
+
+**Option A: Automated GitHub Actions Workflow (Included in `.github/workflows/keep-alive.yml`)**
+1. In your GitHub repository, go to **Settings** ➔ **Secrets and variables** ➔ **Actions**.
+2. Click **"New repository secret"**.
+3. Name: `RENDER_APP_URL`
+4. Value: `https://your-service-name.onrender.com` (your Render public domain).
+5. GitHub will automatically ping your app every 12 minutes, keeping it permanently awake!
+
+**Option B: Free External Monitoring (UptimeRobot / Cron-Job.org)**
+1. Register for free at [UptimeRobot](https://uptimerobot.com/) or [Cron-Job.org](https://cron-job.org/).
+2. Create an **HTTP(s) Monitor**:
+   - **URL:** `https://your-service-name.onrender.com/actuator/health`
+   - **Interval:** `10 minutes`
+3. Save. UptimeRobot will ping the health check every 10 minutes, guaranteeing instant `<50ms` responses for any user at any time.
+

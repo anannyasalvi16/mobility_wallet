@@ -425,10 +425,15 @@ spring.datasource.password=${DB_PASSWORD:root}
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
 # JPA / Hibernate
-spring.jpa.hibernate.ddl-auto=${DDL_AUTO:update}
+spring.jpa.hibernate.ddl-auto=${DDL_AUTO:validate}
 spring.jpa.show-sql=false
 spring.jpa.properties.hibernate.format_sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# Flyway Database Migration
+spring.flyway.enabled=true
+spring.flyway.baseline-on-migrate=true
+spring.flyway.baseline-version=1
 
 # Security / Session
 server.servlet.session.timeout=30m

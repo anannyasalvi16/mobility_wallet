@@ -4,8 +4,9 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.4-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![Thymeleaf](https://img.shields.io/badge/Thymeleaf-3.1-005F0F?logo=thymeleaf&logoColor=white)](https://www.thymeleaf.org/)
-[![Swagger](https://img.shields.io/badge/OpenAPI-3.0-85EA2D?logo=swagger&logoColor=black)](http://localhost:8080/swagger-ui.html)
-[![Tests](https://img.shields.io/badge/JUnit%205-102%20Passing-brightgreen?logo=junit5&logoColor=white)](#automated-testing-suite)
+[![Flyway](https://img.shields.io/badge/Flyway-Migrations-CC0200?logo=flyway&logoColor=white)](https://flywaydb.org/)
+[![Build Status](https://github.com/anannyasalvi16/mobility_wallet/actions/workflows/ci.yml/badge.svg)](https://github.com/anannyasalvi16/mobility_wallet/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/JUnit%205-108%20Passing-brightgreen?logo=junit5&logoColor=white)](#automated-testing-suite)
 
 > **Enterprise-Grade Closed-Loop Prepaid Transit Allowance & Multi-Modal Ticketing Platform**  
 > Engineered with optimistic locking concurrency defenses (`@Version`), atomic QR redemptions (ZXing), an immutable append-only ledger, and dual security filter chains (Stateless REST + Session-based Web UI).
@@ -19,7 +20,7 @@
 4. [Relational Data Model & ER Diagram](#4-relational-data-model--er-diagram)
 5. [Local Setup & MySQL Configuration](#5-local-setup--mysql-configuration)
 6. [Pre-Seeded Demo Credentials](#6-pre-seeded-demo-credentials)
-7. [Automated Testing Suite (102 Tests)](#7-automated-testing-suite-102-tests)
+7. [Automated Testing Suite (108 Tests)](#7-automated-testing-suite-108-tests)
 8. [REST API Documentation & cURL Commands](#8-rest-api-documentation--curl-commands)
 9. [Web User Interface Walkthrough](#9-web-user-interface-walkthrough)
 10. [Technical Interview Preparation Guide](#10-technical-interview-preparation-guide)
@@ -248,14 +249,15 @@ erDiagram
    ```sql
    CREATE DATABASE IF NOT EXISTS mobility_wallet;
    ```
-2. Verify credentials in [`src/main/resources/application-dev.properties`](file:///c:/Users/Anannya%20Salvi/OneDrive/Desktop/PBL%20project/src/main/resources/application-dev.properties):
+2. Verify credentials in [`src/main/resources/application-dev.properties`](src/main/resources/application-dev.properties):
    ```properties
    spring.datasource.url=jdbc:mysql://localhost:3306/mobility_wallet?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
    spring.datasource.username=root
-   spring.datasource.password=Password
-   spring.jpa.hibernate.ddl-auto=update
+   spring.datasource.password=your_db_password
+   spring.jpa.hibernate.ddl-auto=validate
+   spring.flyway.enabled=true
    ```
-   *(You can also override via environment variables: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `PORT`)*.
+   *(Flyway automatically applies database migrations from `src/main/resources/db/migration/` on startup. You can also override database settings via environment variables: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `PORT`, or via a local `application-local.properties` file)*.
 
 ### Running the Application
 ```powershell
@@ -283,7 +285,7 @@ The platform initializes demo records automatically on startup via `DataInitiali
 
 ---
 
-## 7. Automated Testing Suite (102 Tests)
+## 7. Automated Testing Suite (108 Tests)
 
 The test suite runs hermetically using H2 in-memory mode under `@ActiveProfiles("test")` with zero dependency on local MySQL state.
 

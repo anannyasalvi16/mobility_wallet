@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
         "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.flyway.enabled=false",
         // Valid custom production admin credentials
         "ADMIN_EMAIL=customadmin@prod.com",
         "ADMIN_PASSWORD=ProductionSecretPass999!",

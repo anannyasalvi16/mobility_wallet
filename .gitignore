@@ -39,9 +39,12 @@ Desktop.ini
 ### Environment & Secrets ###
 .env
 .env.*
+!.env.example
 .env.local
 application-local.properties
 application-*-local.properties
+application-*.local.properties
+*local*.properties
 *.secret
 *.key
 *.pem
@@ -51,7 +54,10 @@ secrets/
 ### Log files ###
 *.log
 
-### Local Reference Documents ###
+### Local Reference Documents & Scratch Files ###
 explanation*.html
+*explainer*.html
+pbl_explainer.html
+
 
 

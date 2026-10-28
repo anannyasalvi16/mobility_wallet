@@ -11,9 +11,9 @@ set SPRING_PROFILES_ACTIVE=prod
 if "%PORT%"=="" set PORT=8080
 if "%DB_URL%"=="" set DB_URL=jdbc:mysql://localhost:3306/mobility_wallet?createDatabaseIfNotExist=true^&useSSL=false^&allowPublicKeyRetrieval=true^&serverTimezone=UTC
 if "%DB_USERNAME%"=="" set DB_USERNAME=root
-if "%DB_PASSWORD%"=="" set DB_PASSWORD=Password
-if "%ADMIN_EMAIL%"=="" set ADMIN_EMAIL=prodadmin@mobility.com
-if "%ADMIN_PASSWORD%"=="" set ADMIN_PASSWORD=SecureProdPassword2026!
+if "%DB_PASSWORD%"=="" set DB_PASSWORD=your_db_password
+if "%ADMIN_EMAIL%"=="" set ADMIN_EMAIL=admin@example.com
+if "%ADMIN_PASSWORD%"=="" set ADMIN_PASSWORD=ChangeMeInProduction2026!
 
 echo Active Profile : %SPRING_PROFILES_ACTIVE%
 echo HTTP Port      : %PORT%

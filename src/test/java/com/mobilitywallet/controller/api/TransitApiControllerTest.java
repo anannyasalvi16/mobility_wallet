@@ -16,6 +16,7 @@ import com.mobilitywallet.repository.TicketRepository;
 import com.mobilitywallet.repository.TripRepository;
 import com.mobilitywallet.repository.UserRepository;
 import com.mobilitywallet.repository.WalletRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -65,6 +67,9 @@ class TransitApiControllerTest {
 
     @Autowired
     private TicketRepository ticketRepository;
+
+    @Autowired
+    private com.mobilitywallet.repository.TransactionRepository transactionRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -106,6 +111,44 @@ class TransitApiControllerTest {
                 40,
                 new BigDecimal("35.00")
         ));
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (trip != null && trip.getId() != null) {
+            List<com.mobilitywallet.entity.Booking> bookings = bookingRepository.findByTripId(trip.getId());
+            for (com.mobilitywallet.entity.Booking b : bookings) {
+                ticketRepository.deleteAll(ticketRepository.findByBookingId(b.getId()));
+                bookingRepository.delete(b);
+            }
+            tripRepository.findById(trip.getId()).ifPresent(tripRepository::delete);
+        }
+        if (route != null && route.getId() != null) {
+            routeRepository.findById(route.getId()).ifPresent(routeRepository::delete);
+        }
+        routeRepository.findByOriginIgnoreCaseAndDestinationIgnoreCase("East Hub", "West Terminal")
+                .ifPresent(r -> {
+                    tripRepository.findAll().stream()
+                            .filter(t -> t.getRoute() != null && t.getRoute().getId().equals(r.getId()))
+                            .forEach(t -> {
+                                bookingRepository.findByTripId(t.getId()).forEach(b -> {
+                                    ticketRepository.deleteAll(ticketRepository.findByBookingId(b.getId()));
+                                    bookingRepository.delete(b);
+                                });
+                                tripRepository.delete(t);
+                            });
+                    routeRepository.delete(r);
+                });
+
+        userRepository.findByEmail("user@mobility.com").ifPresent(u -> {
+            transactionRepository.findByWalletUserIdOrderByCreatedAtDesc(u.getId()).stream()
+                    .filter(tx -> tx.getDescription() != null && tx.getDescription().contains("Station Alpha"))
+                    .forEach(transactionRepository::delete);
+            walletRepository.findByUserId(u.getId()).ifPresent(wallet -> {
+                wallet.setBalance(new BigDecimal("750.00"));
+                walletRepository.saveAndFlush(wallet);
+            });
+        });
     }
 
     @Test

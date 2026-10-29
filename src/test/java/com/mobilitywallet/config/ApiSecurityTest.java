@@ -28,6 +28,14 @@ class ApiSecurityTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private com.mobilitywallet.repository.UserRepository userRepository;
+
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        userRepository.findByEmail("apicommute@test.com").ifPresent(userRepository::delete);
+    }
+
     @Test
     @DisplayName("/api/** returns 401 JSON without credentials")
     void apiWithoutCredentialsReturns401Json() throws Exception {

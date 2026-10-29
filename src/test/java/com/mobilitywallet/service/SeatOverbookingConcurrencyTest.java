@@ -122,7 +122,19 @@ class SeatOverbookingConcurrencyTest {
                 bookingRepository.delete(b);
             }
             tripRepository.findById(tripId).ifPresent(tripRepository::delete);
+            tripId = null;
         }
+        routeRepository.findByOriginIgnoreCaseAndDestinationIgnoreCase("Test Origin", "Test Destination")
+                .ifPresent(routeRepository::delete);
+
+        for (int i = 0; i < 10; i++) {
+            String email = "overbook_commuter_" + i + "@mobility.com";
+            userRepository.findByEmail(email).ifPresent(u -> {
+                transactionRepository.deleteAll(transactionRepository.findByWalletUserIdOrderByCreatedAtDesc(u.getId()));
+                userRepository.delete(u);
+            });
+        }
+        commuterIds.clear();
     }
 
     @Test

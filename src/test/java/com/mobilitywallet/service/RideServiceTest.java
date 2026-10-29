@@ -18,6 +18,7 @@ import com.mobilitywallet.repository.TransactionRepository;
 import com.mobilitywallet.repository.UserRepository;
 import com.mobilitywallet.repository.VoucherRepository;
 import com.mobilitywallet.repository.WalletRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -81,6 +82,26 @@ class RideServiceTest {
             c.setWallet(w);
             return userRepository.save(c);
         });
+    }
+
+    @AfterEach
+    void tearDown() {
+        String[] codes = {
+                "VCH-TEST-SUCCESS-1", "VCH-TEST-CREATED-1", "VCH-TEST-EXPIRED-1",
+                "VCH-TEST-ALREADY-1", "VCH-TEST-EXCEED-1", "VCH-TEST-ZERO-1", "VCH-TEST-QUERY-1"
+        };
+        for (String code : codes) {
+            transactionRepository.findByVoucherCode(code).forEach(transactionRepository::delete);
+            rideRepository.findByVoucherCode(code).ifPresent(rideRepository::delete);
+            voucherRepository.findByCode(code).ifPresent(voucherRepository::delete);
+        }
+
+        userRepository.findByEmail("user-ride-test@mobility.com").ifPresent(u -> {
+            rideRepository.findByUserIdOrderByRideTimeDesc(u.getId()).forEach(rideRepository::delete);
+            transactionRepository.deleteAll(transactionRepository.findByWalletUserIdOrderByCreatedAtDesc(u.getId()));
+            userRepository.delete(u);
+        });
+        userRepository.findByEmail("admin-ride-test@mobility.com").ifPresent(userRepository::delete);
     }
 
     private Voucher createAssignedVoucher(String code, BigDecimal value, LocalDate expiry) {

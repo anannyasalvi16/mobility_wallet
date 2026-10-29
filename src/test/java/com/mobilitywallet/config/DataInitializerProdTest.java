@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -20,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("prod")
-@DirtiesContext
 @TestPropertySource(properties = {
         // H2 in-memory DB for test isolation while prod profile is active
         "DB_URL=jdbc:h2:mem:prodtestdb;DB_CLOSE_DELAY=-1;MODE=MySQL",

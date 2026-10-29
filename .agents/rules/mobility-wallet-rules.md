@@ -25,3 +25,10 @@
   3. `git diff --stat`
 - STOP and request explicit user confirmation before committing.
 - Request a second explicit confirmation before pushing to the remote repository.
+
+## 5. Production Pre-Merge & Deployment Protocol
+- Before merging database migration PRs to `main`:
+  1. Verify the GitHub Actions CI pipeline passes with a green checkmark.
+  2. Confirm production environment variables are configured on the hosting platform (`SPRING_PROFILES_ACTIVE=prod`, `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`).
+  3. Recommend a database snapshot/backup prior to merging.
+  4. Post-merge, inspect deployment logs to confirm successful Flyway baseline stamp and Hibernate schema validation.

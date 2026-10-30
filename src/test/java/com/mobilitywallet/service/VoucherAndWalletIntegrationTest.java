@@ -79,6 +79,14 @@ class VoucherAndWalletIntegrationTest {
                 });
     }
 
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        voucherRepository.findByCode("VCH-TEST-ASSIGNED-1").ifPresent(voucherRepository::delete);
+        voucherRepository.findAll().stream()
+                .filter(v -> v.getCode().startsWith("VCH-") && !v.getCode().startsWith("VOUCH-"))
+                .forEach(voucherRepository::delete);
+    }
+
     @Test
     @DisplayName("Admin can create a single voucher via REST API")
     void adminCanCreateSingleVoucher() throws Exception {

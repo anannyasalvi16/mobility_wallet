@@ -10,9 +10,11 @@ import com.mobilitywallet.entity.Voucher;
 import com.mobilitywallet.entity.VoucherStatus;
 import com.mobilitywallet.repository.BookingRepository;
 import com.mobilitywallet.repository.RouteRepository;
+import com.mobilitywallet.repository.TicketRepository;
 import com.mobilitywallet.repository.TripRepository;
 import com.mobilitywallet.repository.UserRepository;
 import com.mobilitywallet.repository.VoucherRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +60,54 @@ class WebPortalIntegrationTest {
 
     @Autowired
     private BookingRepository bookingRepository;
+
+    @Autowired
+    private TicketRepository ticketRepository;
+
+    @Autowired
+    private com.mobilitywallet.repository.TransactionRepository transactionRepository;
+
+    @AfterEach
+    void tearDown() {
+        voucherRepository.findByCode("VCH-PORTAL-TEST").ifPresent(voucherRepository::delete);
+        voucherRepository.findAll().stream()
+                .filter(v -> (v.getInitialValue().compareTo(new BigDecimal("50.00")) == 0
+                        || v.getInitialValue().compareTo(new BigDecimal("125.00")) == 0)
+                        && v.getCode().startsWith("VCH-"))
+                .forEach(voucherRepository::delete);
+
+        routeRepository.findByOriginIgnoreCaseAndDestinationIgnoreCase("Station A", "Station B").ifPresent(r -> {
+            tripRepository.findAll().stream()
+                    .filter(t -> t.getRoute() != null && t.getRoute().getId().equals(r.getId()))
+                    .forEach(t -> {
+                        bookingRepository.findByTripId(t.getId()).forEach(b -> {
+                            ticketRepository.deleteAll(ticketRepository.findByBookingId(b.getId()));
+                            bookingRepository.delete(b);
+                        });
+                        tripRepository.delete(t);
+                    });
+            routeRepository.delete(r);
+        });
+
+        routeRepository.findByOriginIgnoreCaseAndDestinationIgnoreCase("North Gate", "Innovation Hub").ifPresent(r -> {
+            tripRepository.findAll().stream()
+                    .filter(t -> t.getRoute() != null && t.getRoute().getId().equals(r.getId()))
+                    .forEach(t -> {
+                        bookingRepository.findByTripId(t.getId()).forEach(b -> {
+                            ticketRepository.deleteAll(ticketRepository.findByBookingId(b.getId()));
+                            bookingRepository.delete(b);
+                        });
+                        tripRepository.delete(t);
+                    });
+            routeRepository.delete(r);
+        });
+
+        userRepository.findByEmail("user@mobility.com").ifPresent(u -> {
+            transactionRepository.findByWalletUserIdOrderByCreatedAtDesc(u.getId()).stream()
+                    .filter(tx -> tx.getDescription() != null && tx.getDescription().contains("Station A"))
+                    .forEach(transactionRepository::delete);
+        });
+    }
 
     @Test
     @DisplayName("Landing page is accessible without authentication")

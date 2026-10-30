@@ -137,6 +137,27 @@ class TransitServiceTest {
 
         transactionRepository.findByVoucherCode("VCH-TRANSIT-SPLIT-1").forEach(transactionRepository::delete);
         voucherRepository.findByCode("VCH-TRANSIT-SPLIT-1").ifPresent(voucherRepository::delete);
+
+        // Clean up routes and trips created in testCreateRouteAndTrip
+        routeRepository.findByOriginIgnoreCaseAndDestinationIgnoreCase("Station X", "Airport Z").ifPresent(r -> {
+            tripRepository.findAll().stream()
+                    .filter(t -> t.getRoute() != null && t.getRoute().getId().equals(r.getId()))
+                    .forEach(t -> {
+                        bookingRepository.findByTripId(t.getId()).forEach(b -> {
+                            ticketRepository.deleteAll(ticketRepository.findByBookingId(b.getId()));
+                            bookingRepository.delete(b);
+                        });
+                        tripRepository.delete(t);
+                    });
+            routeRepository.delete(r);
+        });
+
+        // Clean up test users to prevent polluting user counts in other tests
+        userRepository.findByEmail("user-transit-test@mobility.com").ifPresent(u -> {
+            transactionRepository.deleteAll(transactionRepository.findByWalletUserIdOrderByCreatedAtDesc(u.getId()));
+            userRepository.delete(u);
+        });
+        userRepository.findByEmail("admin-transit-test@mobility.com").ifPresent(userRepository::delete);
     }
 
     @Test

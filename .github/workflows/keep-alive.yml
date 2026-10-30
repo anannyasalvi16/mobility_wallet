@@ -1,0 +1,37 @@
+name: Render Keep-Alive Heartbeat
+# ==============================================================================
+# This workflow runs every 12 minutes to ping the Render Web Service.
+# Because Render Free Tier spins down after 15 minutes of inactivity,
+# this scheduled ping keeps the JVM and container warm 24/7, eliminating
+# the 60-90 second cold-start delay for commuters and evaluators.
+# ==============================================================================
+
+on:
+  schedule:
+    # Runs every 12 minutes (Cron: minute hour day-of-month month day-of-week)
+    - cron: '*/12 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI anytime
+
+jobs:
+  ping-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping Render Actuator Health Check
+        env:
+          # Reads from GitHub Repository Secret RENDER_APP_URL
+          # (e.g. https://mobility-wallet.onrender.com)
+          RENDER_APP_URL: ${{ secrets.RENDER_APP_URL }}
+        run: |
+          TARGET_URL="${RENDER_APP_URL:-https://mobility-wallet.onrender.com}/actuator/health"
+          echo "Sending keep-alive heartbeat to: $TARGET_URL"
+          
+          # Send HTTP GET with max 30s timeout and print status
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$TARGET_URL" || echo "000")
+          
+          echo "Received HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 302 ]; then
+            echo "SUCCESS: Mobility Wallet is alive and awake!"
+          else
+            echo "WARNING: Service returned status $HTTP_STATUS (or still waking up)."
+          fi

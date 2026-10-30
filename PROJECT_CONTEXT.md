@@ -2,7 +2,7 @@
 
 **Last Updated:** All 8 Milestones Completed (100% Tested & Verified)  
 **Technology Stack:** Java 17 | Spring Boot 3.2.4 | Maven | MySQL 8.0 | Thymeleaf | ZXing | SpringDoc OpenAPI  
-**Repository:** https://github.com/anannyasalvi16/mobility_wallet  
+**Repository:** https://github.com/<your-username>/mobility_wallet  
 **Branch:** main  
 
 ---
@@ -169,13 +169,13 @@
 - **Author & Year:** Made by Anannya Salvi • 2026
 - **Local Port:** `8080` (overridable via `PORT`)
 - **Landing Page URL:** `http://localhost:8080/`
-- **Wi-Fi Mobile URL:** `http://192.168.29.155:8080/`
+- **Wi-Fi Mobile URL:** `http://<your-local-ip>:8080/`
 - **Health Check Endpoints:**
   - Standard Actuator: `http://localhost:8080/actuator/health`
   - Legacy REST API: `http://localhost:8080/api/health`
 - **Swagger UI:** `http://localhost:8080/swagger-ui.html`
 - **OpenAPI JSON:** `http://localhost:8080/v3/api-docs`
-- **Database URL (Dev):** `jdbc:mysql://localhost:3306/mobility_wallet` (MySQL 8.0, user `root`, password `Password`)
+- **Database URL (Dev):** `jdbc:mysql://localhost:3306/mobility_wallet` (MySQL 8.0, user `root`, password `<password>`)
 - **Database URL (Prod):** 100% sourced from `${DB_URL}` (no hardcoded fallback)
 - **H2 In-Memory URL:** Active for hermetic `@ActiveProfiles("test")` unit tests (108 passing tests across 19 test suites)
 - **Container Image:** Built via multi-stage `Dockerfile` with slim Java 17 JRE Alpine runtime and non-root user.

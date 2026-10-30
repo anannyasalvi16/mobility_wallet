@@ -77,6 +77,15 @@ class RideApiControllerTest {
         });
     }
 
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        for (String code : new String[]{"VCH-API-REDEEM-1", "VCH-API-REDEEM-DUP"}) {
+            transactionRepository.findByVoucherCode(code).forEach(transactionRepository::delete);
+            rideRepository.findByVoucherCode(code).ifPresent(rideRepository::delete);
+            voucherRepository.findByCode(code).ifPresent(voucherRepository::delete);
+        }
+    }
+
     private Voucher createVoucher(String code, BigDecimal value) {
         // Clean up any old occurrences
         transactionRepository.findByVoucherCode(code).forEach(transactionRepository::delete);

@@ -10,6 +10,7 @@ import com.mobilitywallet.entity.Voucher;
 import com.mobilitywallet.entity.VoucherStatus;
 import com.mobilitywallet.entity.Wallet;
 import com.mobilitywallet.exception.BusinessException;
+import com.mobilitywallet.exception.InsufficientBalanceException;
 import com.mobilitywallet.exception.InvalidVoucherStateException;
 import com.mobilitywallet.exception.ResourceNotFoundException;
 import com.mobilitywallet.exception.VoucherAlreadyRedeemedException;
@@ -102,7 +103,7 @@ public class RideServiceImpl implements RideService {
             throw new BusinessException("Fare amount must be strictly positive");
         }
         if (fare.compareTo(voucher.getInitialValue()) > 0) {
-            throw new BusinessException(String.format(
+            throw new InsufficientBalanceException(String.format(
                     "Ride fare ₹%s exceeds voucher face value ₹%s", fare, voucher.getInitialValue()
             ));
         }

@@ -10,6 +10,7 @@ import com.mobilitywallet.entity.Voucher;
 import com.mobilitywallet.entity.VoucherStatus;
 import com.mobilitywallet.entity.Wallet;
 import com.mobilitywallet.exception.BusinessException;
+import com.mobilitywallet.exception.InsufficientBalanceException;
 import com.mobilitywallet.exception.InvalidVoucherStateException;
 import com.mobilitywallet.exception.ResourceNotFoundException;
 import com.mobilitywallet.exception.VoucherAlreadyRedeemedException;
@@ -219,7 +220,7 @@ class RideServiceTest {
     }
 
     @Test
-    @DisplayName("Redemption throws BusinessException if fare exceeds voucher initial value")
+    @DisplayName("Redemption throws InsufficientBalanceException if fare exceeds voucher initial value")
     void testFareExceedingVoucherValueFails() {
         Voucher v = createAssignedVoucher("VCH-TEST-EXCEED-1", new BigDecimal("300.00"), LocalDate.now().plusMonths(1));
 
@@ -232,7 +233,7 @@ class RideServiceTest {
                 new BigDecimal("350.00") // exceeds 300.00
         );
 
-        assertThrows(BusinessException.class, () -> rideService.redeemVoucher(request));
+        assertThrows(InsufficientBalanceException.class, () -> rideService.redeemVoucher(request));
     }
 
     @Test
